@@ -23,13 +23,15 @@ compile :
 	cd $(boarddir) && $(MAKE)
 	cd $(serverdir) && $(MAKE)
 
-.PHONY : clean execute
+.PHONY : clean server client board
 
 clean : 
 	$(RM)
 
 #Executer le programme
-execute :
-	@$(bindir)$(CLIENT)
-	@$(bindir)$(BOARD)
+server :
 	@$(bindir)$(SERVER)
+client :
+	@$(bindir)$(CLIENT)
+board :
+	@$(bindir)$(BOARD)

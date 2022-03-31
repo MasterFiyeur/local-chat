@@ -40,7 +40,9 @@ Compile :
 ```console
 make 
 ```
-Execute :
+Execute client, board or server:
 ```console
-make execute
+make client
+make board
+make server
 ```
