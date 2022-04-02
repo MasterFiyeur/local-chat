@@ -26,6 +26,10 @@
 #include <time.h>/* Bibliothèque pour le random (creationTab) */
 #include <math.h>/* Bibliothèque pour les fonctions mathématiques */
 #include <pthread.h>/* Bibliothèque de gestion des threads */
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h> 
+#include <netdb.h>
 
 /**
 *\fn void viderBuffer()
