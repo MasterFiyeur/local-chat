@@ -13,11 +13,6 @@
 #define  _GNU_SOURCE
 
 
-/**
-  *  \def ALPHABET
-  *  Definition de l'alphabet qu'on utilisera dans les fonctions de chaine
-*/
-
 /*----Importation des bibliothèques de base----*/
 #include <stdio.h>/*bibliothèque d'entrée/sortie standard*/
 #include <unistd.h>/*Importation de la bibliothèque standard d'unix*/
@@ -26,6 +21,10 @@
 #include <time.h>/* Bibliothèque pour le random (creationTab) */
 #include <math.h>/* Bibliothèque pour les fonctions mathématiques */
 #include <pthread.h>/* Bibliothèque de gestion des threads */
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h> 
+#include <netdb.h>
 
 /**
 *\fn void viderBuffer()
