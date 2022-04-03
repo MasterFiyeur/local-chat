@@ -1,70 +1,17 @@
 #include "../utils/lectureSecurisee.h"
-#include <sys/mman.h>
-
-#define MAX_USERS_CONNECTED 3
-#define MAX_USER_USERNAME_LENGTH 10
-
-struct user{
-    char username[MAX_USER_USERNAME_LENGTH]; //Username of the user
-    char ip_add[16]; //IP address of the user 
-};
-
-/**
-*\brief Add user to the shared_memory (array of connected users)
-*
-*\param shared_memory Array of connected users
-*\param username Username of the user to add
-*\param ip_add IP adress of the user to add
-*\return -1 Username already taken
-*\return 0 Users array is full (No index available)
-*\return 1 User successfully added
-*/
-int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH], char ip_add[16]){
-    int i = 0;
-
-    //User creation
-    struct user new_user;
-    strcpy(new_user.username,username);
-    strcpy(new_user.ip_add,ip_add);
-
-    //Check unique username 
-    for (i = 0; i < MAX_USERS_CONNECTED; i++)
-    {
-        if(strcmp(shared_memory[i].username, username)==0){
-            fprintf(stderr, "User %s already used.\n", username);
-            return -1;
-        }
-    }
-    for (i = 0; i < MAX_USERS_CONNECTED; i++)
-    {
-        if(strcmp(shared_memory[i].username, "")==0){
-            shared_memory[i] = new_user;
-            return 1;
-        }
-    }
-
-    fprintf(stderr, "Connected users array is currently full.\n");
-    return 0;
-}
+#include "user_management.h"
 
 void *communication(void* args){
     struct user *shared_memory = args;
-    int i = 1;
-    char init[10];
-    char num[3];
-    char* name = malloc((MAX_USER_USERNAME_LENGTH+1)*sizeof(char));
-    strcpy(init,"Theo");
-    while (i)
+    while (1)
     {
-        //Update with Theo1, Theo2...
-        strcpy(name,init);
-        sprintf(num,"%d",i);
-        strcat(name,num);
-        //Modify shared_memory
-        printf("[Communication] - Adding user %s...\n", name);
-        add_user(shared_memory, name, "127.0.0.1");
+        //Print shared memory which is modified in communication thread
+        printf("[Communication] - Shared memory : [(%s,%s), (%s,%s), (%s,%s)]\n",
+            shared_memory[0].username,shared_memory[0].ip_add,
+            shared_memory[1].username,shared_memory[1].ip_add,
+            shared_memory[2].username,shared_memory[2].ip_add
+        );
         sleep(2);
-        i++;
 
     }
     pthread_exit(NULL);
@@ -72,15 +19,23 @@ void *communication(void* args){
 
 void *request_manager(void* args){
     struct user *shared_memory = args;
+    //Init username creation variables
+    int i = 1;
+    char init[10];
+    char num[3];
+    char* name = malloc((MAX_USER_USERNAME_LENGTH+1)*sizeof(char));
+    strcpy(init,"Theo");
     while (1)
     {
-        //Print shared memory which is modified in communication thread
-        printf("Request-manager] - Shared memory : [(%s,%s), (%s,%s), (%s,%s)]\n",
-            shared_memory[0].username,shared_memory[0].ip_add,
-            shared_memory[1].username,shared_memory[1].ip_add,
-            shared_memory[2].username,shared_memory[2].ip_add
-        );
+        //Update with Theo1, Theo2...
+        strcpy(name,init);
+        sprintf(num,"%d",i);
+        strcat(name,num);
+        //Modify shared_memory
+        printf("[Request-manager] - Adding user %s...\n", name);
+        add_user(shared_memory, name, "127.0.0.1");
         sleep(2);
+        i++;
     }
     pthread_exit(NULL);
 }
