@@ -4,16 +4,51 @@
 #define MAX_USERS_CONNECTED 3
 #define MAX_USER_USERNAME_LENGTH 10
 
-struct user
-{
-    char username[16];
-    char ip_add[16];
+struct user{
+    char username[MAX_USER_USERNAME_LENGTH]; //Username of the user
+    char ip_add[16]; //IP address of the user 
 };
 
+/**
+*\brief Add user to the shared_memory (array of connected users)
+*
+*\param shared_memory Array of connected users
+*\param username Username of the user to add
+*\param ip_add IP adress of the user to add
+*\return -1 Username already taken
+*\return 0 Users array is full (No index available)
+*\return 1 User successfully added
+*/
+int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH], char ip_add[16]){
+    int i = 0;
 
+    //User creation
+    struct user new_user;
+    strcpy(new_user.username,username);
+    strcpy(new_user.ip_add,ip_add);
+
+    //Check unique username 
+    for (i = 0; i < MAX_USERS_CONNECTED; i++)
+    {
+        if(strcmp(shared_memory[i].username, username)==0){
+            fprintf(stderr, "User %s already used.\n", username);
+            return -1;
+        }
+    }
+    for (i = 0; i < MAX_USERS_CONNECTED; i++)
+    {
+        if(strcmp(shared_memory[i].username, "")==0){
+            shared_memory[i] = new_user;
+            return 1;
+        }
+    }
+
+    fprintf(stderr, "Connected users array is currently full.\n");
+    return 0;
+}
 
 void *communication(void* args){
-    char** shared_memory = args;
+    struct user *shared_memory = args;
     int i = 1;
     char init[10];
     char num[3];
@@ -26,9 +61,8 @@ void *communication(void* args){
         sprintf(num,"%d",i);
         strcat(name,num);
         //Modify shared_memory
-        memcpy(shared_memory[(i-1)%3], name, sizeof(char)*(MAX_USER_USERNAME_LENGTH+1));
-
-        printf("[Communication] - Writing %s to index %d in shared memory\n",name,(i-1)%3);
+        printf("[Communication] - Adding user %s...\n", name);
+        add_user(shared_memory, name, "127.0.0.1");
         sleep(2);
         i++;
 
@@ -37,11 +71,15 @@ void *communication(void* args){
 }
 
 void *request_manager(void* args){
-    char** shared_memory = args;
+    struct user *shared_memory = args;
     while (1)
     {
         //Print shared memory which is modified in communication thread
-        printf("Request-manager] - Shared memory : [%s, %s, %s]\n",shared_memory[0],shared_memory[1],shared_memory[2]);
+        printf("Request-manager] - Shared memory : [(%s,%s), (%s,%s), (%s,%s)]\n",
+            shared_memory[0].username,shared_memory[0].ip_add,
+            shared_memory[1].username,shared_memory[1].ip_add,
+            shared_memory[2].username,shared_memory[2].ip_add
+        );
         sleep(2);
     }
     pthread_exit(NULL);
@@ -50,14 +88,16 @@ void *request_manager(void* args){
 int main(int argc, char const *argv[])
 {
     pthread_t com, req; //communication process and req process
-    char** shared_memory; //Shared memory variable
+    struct user *shared_memory; //Shared memory variable
     
     //Shared memory init
-    shared_memory = mmap(NULL, MAX_USERS_CONNECTED*sizeof(char*), (PROT_READ | PROT_WRITE), (MAP_SHARED | MAP_ANONYMOUS), -1, 0);
-    for (size_t i = 0; i < MAX_USERS_CONNECTED; i++)
-    {
-        shared_memory[i] = malloc((MAX_USER_USERNAME_LENGTH+1)*sizeof(char));
+    shared_memory = mmap(NULL, MAX_USERS_CONNECTED*sizeof(struct user), (PROT_READ | PROT_WRITE), (MAP_SHARED | MAP_ANONYMOUS), -1, 0);
+    //Init of users array to empty string as username and ip_add
+    for (size_t i = 0; i < MAX_USERS_CONNECTED; i++){
+        strcpy(shared_memory[i].username,"");
+        strcpy(shared_memory[i].ip_add,"");
     }
+
     
     printf("Hello I'm the server !\n");
 
@@ -80,11 +120,6 @@ int main(int argc, char const *argv[])
     pthread_join( com, NULL);
     pthread_join( req, NULL);
 
-    //Free every string from shared_memory
-    for (size_t i = 0; i < MAX_USERS_CONNECTED; i++)
-    {
-        free(shared_memory[i]);
-    }
     //Unmap shared_memory
     munmap(shared_memory, MAX_USERS_CONNECTED*sizeof(char*));
     printf("Server finished.\n");
