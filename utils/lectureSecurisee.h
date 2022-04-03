@@ -13,11 +13,6 @@
 #define  _GNU_SOURCE
 
 
-/**
-  *  \def ALPHABET
-  *  Definition de l'alphabet qu'on utilisera dans les fonctions de chaine
-*/
-
 /*----Importation des bibliothèques de base----*/
 #include <stdio.h>/*bibliothèque d'entrée/sortie standard*/
 #include <unistd.h>/*Importation de la bibliothèque standard d'unix*/
