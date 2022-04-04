@@ -1,6 +1,6 @@
 #include "../utils/lectureSecurisee.h"
-#include "user_management.h"
 #include "../utils/request.h"
+#include "user_management.h"
 
 /**
 *\brief This function used by a thread will manage TCP connection for write and read messages between clients
@@ -36,6 +36,10 @@ void *request_manager(void* args){
     struct sockaddr_in adr_s, adr_c;
     struct request request;
 
+    /* Login used */
+    char* username, password;
+    char** splitted_str;
+
     /* Socket init */
     sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     bzero(&adr_s,sizeof(adr_s)); 
@@ -49,6 +53,23 @@ void *request_manager(void* args){
         lg = sizeof(adr_c);
         if(recvfrom (sock, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_c, &lg)){
             printf("J'ai reçu un message de type : %d avec les données suivantes : %s\n",request.type, request.data);
+
+            switch (request.type)
+            {
+            case 1: //log in
+                /*splitted_str = str_split(request.data,'/');
+                if(*(splitted_str) && *(splitted_str + 1)){
+                    password = *(splitted_str + 1);
+                    username = *(splitted_str);
+                    printf("Username received (%ld): %s\nPassword received (%ld): %s\n", strlen(username), username, strlen(password), password);
+                }*/
+                printf("Case login\n");
+                break;
+            
+            default:
+                //Send user's list
+                break;
+            }
         }
     }
     /* Close socket */
