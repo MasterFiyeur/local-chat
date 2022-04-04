@@ -8,7 +8,7 @@ int main(int argc, char const *argv[])
     struct sockaddr_in adr_s, adr_c;
     unsigned int sock, lg;
     /* Request creation */
-    request.type = -2;
+    request.type = 0;
     strcpy(request.data,"MySuper/Password");
 
     sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); // Creation socket
