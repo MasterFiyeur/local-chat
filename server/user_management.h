@@ -41,3 +41,8 @@ char *token_generation();
 *\return 2 Users array is full (No index available)
 */
 int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH]);
+
+
+int* tableDocument(char* chemin); /*renvoie un tableau avec en indice 0 la taille du tableau, et le reste le nombre de caractères à la nième ligne*/
+char** contenuOrganise(char* chemin, int* tableau);
+int cherchePseudo(char* pseudo, char* chemin);

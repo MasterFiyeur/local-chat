@@ -36,3 +36,83 @@ int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH]
     }
     return 2;
 }
+
+
+
+
+int* tableDocument(char* chemin) {
+    FILE* fichier = fopen(chemin,"r");
+    int* res;
+    int lignes = 0;
+    int caractere = 0;
+    int ligne;
+    int compte;
+    if (fichier != NULL) {
+        do {
+            caractere = fgetc(fichier);
+            if (caractere == 10) {lignes+=1;}
+        } while (caractere != EOF);
+    }
+    fclose(fichier);
+
+    res = malloc((lignes+1)*sizeof(int));
+    res[0] = lignes;
+    fichier = fopen(chemin,"r");
+    if (fichier != NULL) {
+        for(int i=1;i<=lignes;i++) {
+            caractere = 0;
+            compte = 0;
+            while(caractere != 10) {
+                compte += 1;
+                caractere = fgetc(fichier);
+            }
+            res[i] = compte;
+        }
+    }
+    fclose(fichier);
+
+    return(res);
+}
+
+char** contenuOrganise(char* chemin, int* tableau) {
+    char** res;
+    int taille = tableau[0];
+    res = malloc(taille*sizeof(char*));
+    for(int i=0;i<taille;i++) {
+        res[i] = malloc(tableau[i+1]*sizeof(char));
+    }
+    
+    FILE* fichier = NULL;
+    fichier = fopen(chemin,"r");
+    if (fichier!=NULL) {
+        for(int i = 1;i <= taille;i++) {
+            fgets(res[i-1],tableau[i],fichier);
+        }
+    }
+    fclose(fichier);
+    return(res);
+}
+
+int cherchePseudo(char* pseudo,char* chemin) {
+    int* tableau = tableDocument(chemin);
+    int taille = tableau[0];
+    char** couples = contenuOrganise(chemin, tableau);
+    int i=0;
+    int j=0;
+    for(int k=0;k<taille;k++) {
+        j=0;
+        while (couples[k][j] != '\t') {
+            if (pseudo[i] == couples[k][j]) {
+                i += 1;
+            }
+            else {
+                i = 0;
+            }
+            if (pseudo[i] == '\0') {
+                return(k);
+            }
+            j+=1;
+        }
+    }
+    return(-1);
+}
