@@ -6,9 +6,9 @@ int main(int argc, char const *argv[])
 {
     struct request request;
     struct sockaddr_in adr_s, adr_c;
-    int sock;
+    unsigned int sock, lg;
     /* Request creation */
-    request.type = 1;
+    request.type = -2;
     strcpy(request.data,"MySuper/Password");
 
     sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); // Creation socket
@@ -26,7 +26,10 @@ int main(int argc, char const *argv[])
     bind (sock, (struct sockaddr *) &adr_c, sizeof(adr_c));
     /* Sending informations */
     sendto (sock, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, sizeof(adr_s)); 
-    
+    lg = sizeof(adr_s);
+    if (recvfrom (sock, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg)>0){
+        printf("%s\n",request.data);
+    }
     //Close socket
     close(sock);
 

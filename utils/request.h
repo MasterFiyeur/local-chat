@@ -6,6 +6,7 @@
 #pragma once
 
 #define UDP_PORT 2058
+#define REQUEST_DATA_MAX_LENGTH 128
 
 struct request
 {
@@ -17,11 +18,5 @@ struct request
     * -2 delete account
     * 0 get current connected users
     */
-    char data[128];
+    char data[REQUEST_DATA_MAX_LENGTH];
 };
-
-/*struct request_processing{
-    struct request request;
-    unsigned int sock;
-    struct sockaddr_in adr_client;
-}*/

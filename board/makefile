@@ -18,6 +18,7 @@ bindir=../output/
 
 #Fichiers source
 SRC_BOARD=$(wildcard $(boarddir)*.c)
+SRC_UTILS=$(wildcard $(utilsdir)*.c)
 #Fichiers objet
 OBJ_BOARD=$(subst $(boarddir), $(bindir),$(SRC_BOARD:.c=.o))
 OBJ_UTILS=$(subst $(utilsdir), $(bindir),$(SRC_UTILS:.c=.o))

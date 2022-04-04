@@ -18,6 +18,7 @@ bindir=../output/
 
 #Fichiers source
 SRC_CLIENT=$(wildcard $(clientdir)*.c)
+SRC_UTILS=$(wildcard $(utilsdir)*.c)
 #Fichiers objet
 OBJ_CLIENT=$(subst $(clientdir), $(bindir),$(SRC_CLIENT:.c=.o))
 OBJ_UTILS=$(subst $(utilsdir), $(bindir),$(SRC_UTILS:.c=.o))

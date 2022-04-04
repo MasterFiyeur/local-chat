@@ -39,13 +39,13 @@ int saisieInt()
 		/* Lecture d'un entier suivi d'un caractère */
 		int_retour = scanf("%d%c",&int_ent,&ch_term);
 		/* Vérification de la valeur entrée */
-		if(int_retour != 2 || !('\n'==ch_term || ' '==ch_term || '\t'==ch_term)){
+		if (int_retour != 2 || !('\n'==ch_term || ' '==ch_term || '\t'==ch_term)){
 			/* Lorsque la saisie est mauvaise on ecrit un message et on vide le buffer */
 			fprintf(stderr,"\nErreur de saisie (entier), recommencez :");
 			viderBuffer();
 		}else{
 			/* Vidage du buffer si il n'est pas vide */
-			if(ch_term != '\n'){
+			if (ch_term != '\n'){
 				viderBuffer();
 			}
 			/* Tout est OK, la valeur peut être retournée */
@@ -70,13 +70,13 @@ float saisieFloat()
 	{
 		int_retour = scanf("%f%c",&float_ent,&ch_term);
 		/* Vérification de la valeur entrée */
-		if(int_retour != 2 || !('\n'==ch_term || ' '==ch_term || '\t'==ch_term)){
+		if (int_retour != 2 || !('\n'==ch_term || ' '==ch_term || '\t'==ch_term)){
 			/* Lorsque la saisie est mauvaise on écrit un message et on vide le buffer */
 			fprintf(stderr,"\nErreur de saisie (réel), recommencez :");
 			viderBuffer();
 		}else{
 			/* Vidage du buffer si il n'est pas vide */
-			if(ch_term != '\n'){
+			if (ch_term != '\n'){
 				viderBuffer();
 			}
 			/* Tout est OK, la valeur peut être retournée */
@@ -100,7 +100,7 @@ int saisieString(char* str_chaine,int int_taille){
 		/* Lecture de la chaine de caractère */
 		int_tailleReelle = getline(&ligne, &size_alloue,stdin);
 		/* Prevention erreur de saisie */
-		if(int_tailleReelle > int_taille){
+		if (int_tailleReelle > int_taille){
 			/* Message à l'utilisateur */
 			printf("La longueur ne doit pas excéder %d caractères.\n",int_taille-1);
 		}
@@ -132,7 +132,7 @@ int * creationTab(int *int_taille){
     printf("Voulez-vous remplir le tableau manuellement ? (1 : oui)\n");
     /* Saisie de l utilisateur */
     int_remplissage = saisieInt();
-    if(int_remplissage == 1){
+    if (int_remplissage == 1){
         /* Remplissage manuel */
         for (i = 0; i < *int_taille; i++)
         {
