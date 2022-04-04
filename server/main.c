@@ -1,6 +1,43 @@
 #include "../utils/lectureSecurisee.h"
 #include "../utils/request.h"
 #include "user_management.h"
+#include "request_management.h"
+
+void *login(void* args){
+    /* Request informations */
+    struct request_processing *parent_info = args;
+
+    char data[REQUEST_DATA_MAX_LENGTH];
+    strcpy(data,(*parent_info).request.data);//Put request data in data
+
+    printf("[Login-thread] - Received data (length : %ld): %s\n", strlen(data), data); //Log
+
+    //TODO : Make the connection (check user exist and add to connected user and creation of token)
+    strcpy((*parent_info).request.data,"token:MYSUPERTOKEN");
+
+    /* Sending response */
+    sendto ((*parent_info).sock, (void *) &(*parent_info).request, sizeof(struct request), 0, (struct sockaddr *) &(*parent_info).adr_client, sizeof((*parent_info).adr_client)); 
+    
+    pthread_exit(NULL);
+}
+
+void *logout(void* args){
+    /* Request informations */
+    struct request_processing *parent_info = args;
+
+    char data[REQUEST_DATA_MAX_LENGTH];
+    strcpy(data,(*parent_info).request.data);//Put request data in data
+
+    printf("[Login-thread] - Received data (length : %ld): %s\n", strlen(data), data); //Log
+    
+    //TODO : Make the deconnection (Removing user from the shared memory)
+    strcpy((*parent_info).request.data,"ok");
+
+    /* Sending response */
+    sendto ((*parent_info).sock, (void *) &(*parent_info).request, sizeof(struct request), 0, (struct sockaddr *) &(*parent_info).adr_client, sizeof((*parent_info).adr_client)); 
+    
+    pthread_exit(NULL);
+}
 
 /**
 *\brief This function used by a thread will manage TCP connection for write and read messages between clients
@@ -31,14 +68,18 @@ void *communication(void* args){
 *\return void* Nothing
  */
 void *request_manager(void* args){
-    struct user *shared_memory = args;
-    unsigned int sock, lg;
-    struct sockaddr_in adr_s, adr_c;
+    struct user *shared_memory = args; //Connected users
+    unsigned int sock, lg = sizeof(struct sockaddr_in); //socket and adr_c size
+    struct sockaddr_in adr_s, adr_c; //Server and client addresses
+
+    //Object sent to thread 
+    struct request_processing arguments;
+
+    //Request object
     struct request request;
 
-    /* Login used */
-    char* username, password;
-    char** splitted_str;
+    //Thread for request processing
+    pthread_t request_thread;
 
     /* Socket init */
     sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -48,27 +89,58 @@ void *request_manager(void* args){
     adr_s.sin_addr.s_addr = htonl(INADDR_ANY);
     bind (sock, (struct sockaddr *) &adr_s, sizeof(adr_s)); // Attachement socket
 
-    while (1)
-    {
-        lg = sizeof(adr_c);
-        if(recvfrom (sock, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_c, &lg)){
-            printf("J'ai reçu un message de type : %d avec les données suivantes : %s\n",request.type, request.data);
+    while (1){
+        //Waiting for a new message
+        if (recvfrom (sock, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_c, &lg)){
 
-            switch (request.type)
-            {
-            case 1: //log in
-                /*splitted_str = str_split(request.data,'/');
-                if(*(splitted_str) && *(splitted_str + 1)){
-                    password = *(splitted_str + 1);
-                    username = *(splitted_str);
-                    printf("Username received (%ld): %s\nPassword received (%ld): %s\n", strlen(username), username, strlen(password), password);
-                }*/
-                printf("Case login\n");
-                break;
-            
-            default:
-                //Send user's list
-                break;
+            //request_processing object building
+            arguments.adr_client = adr_c;
+            arguments.request = request;
+            arguments.shared_memory = shared_memory;
+            arguments.sock = sock;
+
+            switch (request.type){
+                case 1: //log in
+                    printf("[Request_manager] - Log in thread creation...\n");
+
+                    /* Thread creation for request treatment */
+                    if (pthread_create( &request_thread, NULL, login, &arguments))
+                        printf("\nError during request_thread creation\n");
+                    else
+                        pthread_detach(request_thread);
+                    break;
+                case -1://log out
+                    printf("[Request_manager] - Log out thread creation...\n");
+
+                    /* Thread creation for request treatment */
+                    if (pthread_create( &request_thread, NULL, logout, &arguments))
+                        printf("\nError during request_thread creation\n");
+                    else
+                        pthread_detach(request_thread);
+                    break;
+                case 2:
+                    printf("Asking for account creation...\n");
+                    //TODO : Make the connection (check user exist and add to connected user and creation of token)
+                    strcpy(request.data,"Created");
+
+                    sendto (sock, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_c, sizeof(adr_c));    
+                    break;
+                case -2:
+                    printf("Asking for account deletion...\n");
+                    //TODO : Make the connection (check user exist and add to connected user and creation of token)
+                    strcpy(request.data,"Deleted");
+
+                    sendto (sock, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_c, sizeof(adr_c));    
+                    break;
+                default:
+                    printf("Asking for connected users...\n");
+                    //TODO : Make the connection (check user exist and add to connected user and creation of token)
+                    strcpy(request.data,"Arthur, Théo, Test");
+
+                    sendto (sock, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_c, sizeof(adr_c));    
+
+                    //Send user's list
+                    break;
             }
         }
     }
@@ -100,7 +172,7 @@ int main(int argc, char const *argv[])
 
     /* Communication thread creation */
     printf("Creation communication thread...");
-    if(pthread_create( &com, NULL, communication, (void*)shared_memory))
+    if (pthread_create( &com, NULL, communication, (void*)shared_memory))
         printf("\nError during thread creation\n");
     printf("Created\n");
 
@@ -109,7 +181,7 @@ int main(int argc, char const *argv[])
 
     /* Request manager thread creation */
     printf("Creation request thread...");
-    if(pthread_create( &req, NULL, request_manager, (void*)shared_memory)) //Thread creation
+    if (pthread_create( &req, NULL, request_manager, (void*)shared_memory)) //Thread creation
         printf("\nError during thread creation\n");
     printf("Created\n");
 
