@@ -1,3 +1,7 @@
+# Output
+output/*
+!output/.gitkeep
+
 # Prerequisites
 *.d
 
