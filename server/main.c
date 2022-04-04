@@ -124,7 +124,7 @@ int main(int argc, char const *argv[])
 
     
     printf("Hello I'm the server !\n");
-
+    
     /* Communication thread creation */
     printf("Creation communication thread...");
     if (pthread_create( &com, NULL, communication, (void*)shared_memory))
