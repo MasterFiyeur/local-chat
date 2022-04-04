@@ -19,3 +19,9 @@ struct request
     */
     char data[128];
 };
+
+/*struct request_processing{
+    struct request request;
+    unsigned int sock;
+    struct sockaddr_in adr_client;
+}*/
