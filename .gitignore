@@ -2,6 +2,9 @@
 output/*
 !output/.gitkeep
 
+# IDE
+.vscode
+
 # Prerequisites
 *.d
 
