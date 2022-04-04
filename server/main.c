@@ -13,13 +13,12 @@ void *communication(void* args){
     while (1)
     {
         //Print shared memory which is modified in communication thread
-        printf("[Communication] - Shared memory : [(%s,%s), (%s,%s), (%s,%s)]\n",
-            shared_memory[0].username,shared_memory[0].ip_add,
-            shared_memory[1].username,shared_memory[1].ip_add,
-            shared_memory[2].username,shared_memory[2].ip_add
+        printf("[Communication] - Shared memory : [(%s,%d,%s), (%s,%d,%s), (%s,%d,%s)]\n",
+            shared_memory[0].username, shared_memory[0].sock, shared_memory[0].token,
+            shared_memory[1].username, shared_memory[1].sock, shared_memory[1].token,
+            shared_memory[2].username, shared_memory[2].sock, shared_memory[2].token
         );
         sleep(2);
-
     }
     pthread_exit(NULL);
 }
@@ -32,21 +31,16 @@ void *communication(void* args){
  */
 void *request_manager(void* args){
     struct user *shared_memory = args;
+    char name[MAX_USER_USERNAME_LENGTH];
     //Init username creation variables
     int i = 1;
-    char init[10];
-    char num[3];
-    char* name = malloc((MAX_USER_USERNAME_LENGTH+1)*sizeof(char));
-    strcpy(init,"Theo");
     while (1)
     {
-        //Update with Theo1, Theo2...
-        strcpy(name,init);
-        sprintf(num,"%d",i);
-        strcat(name,num);
+        //Update with Theo1, Theo2..
+        sprintf(name,"%s%d","Theo",i);
         //Modify shared_memory
         printf("[Request-manager] - Adding user %s...\n", name);
-        add_user(shared_memory, name, "127.0.0.1");
+        add_user(shared_memory, name);
         sleep(2);
         i++;
     }
@@ -58,12 +52,16 @@ int main(int argc, char const *argv[])
     pthread_t com, req; //communication process and request manager process
     struct user *shared_memory; //Shared memory variable (connected users)
     
+    //Init of random function (ex : token generation)
+    srand(time(NULL));
+
     /* Shared memory of connected users initialization */
     shared_memory = mmap(NULL, MAX_USERS_CONNECTED*sizeof(struct user), (PROT_READ | PROT_WRITE), (MAP_SHARED | MAP_ANONYMOUS), -1, 0); //Shared memory init
     //Init of users array to empty string as username and ip_add
     for (size_t i = 0; i < MAX_USERS_CONNECTED; i++){
         strcpy(shared_memory[i].username,"");
-        strcpy(shared_memory[i].ip_add,"");
+        strcpy(shared_memory[i].token,"");
+        shared_memory[i].sock = 0;
     }
 
     
