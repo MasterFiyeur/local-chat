@@ -120,11 +120,14 @@ void *communication(void* args){
 *
 *\param args [struct user *] shared memory of connected users with the communication thread
 *\return void* Nothing
- */
+*/
 void *request_manager(void* args){
     struct user *shared_memory = args; //Connected users
     unsigned int sock, lg = sizeof(struct sockaddr_in); //socket and adr_c size
     struct sockaddr_in adr_s, adr_c; //Server and client addresses
+
+    //Function parameter furing thread creation
+    void* thread_function = NULL;
 
     //Object sent to thread 
     struct request_processing arguments;
@@ -156,50 +159,34 @@ void *request_manager(void* args){
             switch (request.type){
                 case 1: //log in
                     printf("[Request_manager] - Log in thread creation...\n");
-
-                    /* Thread creation for request treatment */
-                    if (pthread_create( &request_thread, NULL, login, &arguments))
-                        printf("\nError during request_thread creation\n");
-                    else
-                        pthread_detach(request_thread);
+                    thread_function = login; // function for log in
                     break;
                 case -1://log out
                     printf("[Request_manager] - Log out thread creation...\n");
 
-                    /* Thread creation for request treatment */
-                    if (pthread_create( &request_thread, NULL, logout, &arguments))
-                        printf("\nError during request_thread creation\n");
-                    else
-                        pthread_detach(request_thread);
+                    thread_function = logout; // function for log out
                     break;
                 case 2://creation of account
                     printf("[Request_manager] - Account-creation thread creation...\n");
 
-                    /* Thread creation for request treatment */
-                    if (pthread_create( &request_thread, NULL, account_creation, &arguments))
-                        printf("\nError during request_thread creation\n");
-                    else
-                        pthread_detach(request_thread);
+                    thread_function = account_creation; // function for create an account
                     break;
                 case -2://deletion of account
                     printf("[Request_manager] - Account-deletion thread creation...\n");
 
-                    /* Thread creation for request treatment */
-                    if (pthread_create( &request_thread, NULL, account_deletion, &arguments))
-                        printf("\nError during request_thread creation\n");
-                    else
-                        pthread_detach(request_thread);
+                    thread_function = account_deletion; // function for delete an account
                     break;
                 default://connected users list
                     printf("[Request_manager] - connected_users thread creation...\n");
 
-                    /* Thread creation for request treatment */
-                    if (pthread_create( &request_thread, NULL, connected_users, &arguments))
-                        printf("\nError during request_thread creation\n");
-                    else
-                        pthread_detach(request_thread);
+                    thread_function = connected_users; // function send list of connected users
                     break;
             }
+            /* Thread creation for request treatment */
+            if (pthread_create( &request_thread, NULL, thread_function, &arguments))
+                printf("\nError during request_thread creation\n");
+            else
+                pthread_detach(request_thread);
         }
     }
     /* Close socket */
