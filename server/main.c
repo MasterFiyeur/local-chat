@@ -1,5 +1,6 @@
 #include "../utils/lectureSecurisee.h"
 #include "user_management.h"
+#include "../utils/request.h"
 
 /**
 *\brief This function used by a thread will manage TCP connection for write and read messages between clients
@@ -13,11 +14,11 @@ void *communication(void* args){
     while (1)
     {
         //Print shared memory which is modified in communication thread
-        printf("[Communication] - Shared memory : [(%s,%d,%s), (%s,%d,%s), (%s,%d,%s)]\n",
+        /*printf("[Communication] - Shared memory : [(%s,%d,%s), (%s,%d,%s), (%s,%d,%s)]\n",
             shared_memory[0].username, shared_memory[0].sock, shared_memory[0].token,
             shared_memory[1].username, shared_memory[1].sock, shared_memory[1].token,
             shared_memory[2].username, shared_memory[2].sock, shared_memory[2].token
-        );
+        );*/
         sleep(2);
     }
     pthread_exit(NULL);
@@ -31,19 +32,28 @@ void *communication(void* args){
  */
 void *request_manager(void* args){
     struct user *shared_memory = args;
-    char name[MAX_USER_USERNAME_LENGTH];
-    //Init username creation variables
-    int i = 1;
+    unsigned int sock, lg;
+    struct sockaddr_in adr_s, adr_c;
+    struct request request;
+
+    /* Socket init */
+    sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    bzero(&adr_s,sizeof(adr_s)); 
+    adr_s.sin_family = AF_INET;
+    adr_s.sin_port = htons(UDP_PORT);
+    adr_s.sin_addr.s_addr = htonl(INADDR_ANY);
+    bind (sock, (struct sockaddr *) &adr_s, sizeof(adr_s)); // Attachement socket
+
     while (1)
     {
-        //Update with Theo1, Theo2..
-        sprintf(name,"%s%d","Theo",i);
-        //Modify shared_memory
-        printf("[Request-manager] - Adding user %s...\n", name);
-        add_user(shared_memory, name);
-        sleep(2);
-        i++;
+        lg = sizeof(adr_c);
+        if(recvfrom (sock, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_c, &lg)){
+            printf("J'ai reçu un message de type : %d avec les données suivantes : %s\n",request.type, request.data);
+        }
     }
+    /* Close socket */
+    close(sock);
+    /* Exit thread */
     pthread_exit(NULL);
 }
 
