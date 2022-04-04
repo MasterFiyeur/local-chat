@@ -34,16 +34,11 @@ void *request_manager(void* args){
     struct user *shared_memory = args;
     //Init username creation variables
     int i = 1;
-    char init[10];
-    char num[3];
     char* name = malloc((MAX_USER_USERNAME_LENGTH+1)*sizeof(char));
-    strcpy(init,"Theo");
     while (1)
     {
         //Update with Theo1, Theo2...
-        strcpy(name,init);
-        sprintf(num,"%d",i);
-        strcat(name,num);
+        sprintf(name, "Theo%d", i);
         //Modify shared_memory
         printf("[Request-manager] - Adding user %s...\n", name);
         add_user(shared_memory, name, "127.0.0.1");
