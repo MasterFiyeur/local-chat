@@ -26,8 +26,8 @@ struct user{
 *\param shared_memory Array of connected users
 *\param username Username of the user to add
 *\param ip_add IP adress of the user to add
-*\return -1 Username already taken
-*\return 0 Users array is full (No index available)
-*\return 1 User successfully added
+*\return 0 User successfully added
+*\return 1 Username already taken
+*\return 2 Users array is full (No index available)
 */
 int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH], char ip_add[16]);

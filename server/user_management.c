@@ -12,15 +12,15 @@ int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH]
     for (i = 0; i < MAX_USERS_CONNECTED; i++)
     {
         if(strcmp(shared_memory[i].username, username)==0){
-            return -1;
+            return 1;
         }
     }
     for (i = 0; i < MAX_USERS_CONNECTED; i++)
     {
         if(strcmp(shared_memory[i].username, "")==0){
             shared_memory[i] = new_user;
-            return 1;
+            return 0;
         }
     }
-    return 0;
+    return 2;
 }
