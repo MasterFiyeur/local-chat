@@ -47,10 +47,7 @@ int main(int argc, char const *argv[]) {
     adr_s.sin_port = htons(UDP_PORT);
     adr_s.sin_addr.s_addr = htonl(INADDR_ANY);
     /* Attachement socket */
-    if (bind(sock, (struct sockaddr *) &adr_c, sizeof(adr_c)) == -1) {
-        printf("Unable to bind to server\n");
-        return EXIT_FAILURE;
-    }
+    bind(sock, (struct sockaddr *) &adr_c, sizeof(adr_c));
     /* Sending informations */
     sendto (sock, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, sizeof(adr_s)); 
     lg = sizeof(adr_s);
