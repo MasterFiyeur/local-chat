@@ -54,7 +54,6 @@ void *login(void* args){
         sendto ((*parent_info).sock, (void *) &(*parent_info).request, sizeof(struct request), 0, (struct sockaddr *) &(*parent_info).adr_client, sizeof((*parent_info).adr_client)); 
         break;
     }
-    
     pthread_exit(NULL);
 }
 
@@ -62,17 +61,29 @@ void *logout(void* args){
     /* Request informations */
     struct request_processing *parent_info = args;
 
-    char data[REQUEST_DATA_MAX_LENGTH];
-    strcpy(data,(*parent_info).request.data);//Put request data in data
+    char token[TOKEN_SIZE];//Token got when log in
 
-    printf("[Logout-thread] - Received data (length : %ld): %s\n", strlen(data), data); //Log
+    if(strlen((*parent_info).request.data) != (TOKEN_SIZE-1)){ //Token doesn't have the right format
+        (*parent_info).request.type = -1; 
+        strcpy((*parent_info).request.data,"The token doesn't have the right format");
+        sendto ((*parent_info).sock, (void *) &(*parent_info).request, sizeof(struct request), 0, (struct sockaddr *) &(*parent_info).adr_client, sizeof((*parent_info).adr_client)); 
+    }
+
+    printf("[Logout-thread] - Received data (length : %ld): %s\n", strlen(token), token); //Log
     
-    //TODO : Make the deconnection (Removing user from the shared memory)
-    strcpy((*parent_info).request.data,"ok");
-
     /* Sending response */
-    sendto ((*parent_info).sock, (void *) &(*parent_info).request, sizeof(struct request), 0, (struct sockaddr *) &(*parent_info).adr_client, sizeof((*parent_info).adr_client)); 
-    
+    switch (remove_user((*parent_info).shared_memory,token)){
+    case 0://All went right
+        (*parent_info).request.type = 0;
+        strcpy((*parent_info).request.data,"User disconnected");
+        sendto ((*parent_info).sock, (void *) &(*parent_info).request, sizeof(struct request), 0, (struct sockaddr *) &(*parent_info).adr_client, sizeof((*parent_info).adr_client)); 
+        break;
+    default://User not found
+        (*parent_info).request.type = -1; 
+        strcpy((*parent_info).request.data,"User not found");
+        sendto ((*parent_info).sock, (void *) &(*parent_info).request, sizeof(struct request), 0, (struct sockaddr *) &(*parent_info).adr_client, sizeof((*parent_info).adr_client)); 
+        break;
+    }
     pthread_exit(NULL);
 }
 

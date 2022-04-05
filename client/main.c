@@ -54,6 +54,14 @@ int main(int argc, char const *argv[]) {
     if (recvfrom (sock, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg)>0){
         printf("%s\n",request.data);
     }
+    char token[16];
+    request.type = -1;
+    strcpy(token,request.data);
+    sendto (sock, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, sizeof(adr_s)); 
+    lg = sizeof(adr_s);
+    if (recvfrom (sock, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg)>0){
+        printf("%s\n",request.data);
+    }
     //Close socket
     close(sock);
 

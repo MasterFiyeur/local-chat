@@ -46,3 +46,13 @@ char *token_generation();
 *\return 2 Users array is full (No index available)
 */
 int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH], char** token);
+
+/**
+*\brief Remove user from the shared_memory (array of connected users)
+*
+*\param shared_memory Array of connected users
+*\param token Token of the user to remove(got when log in)
+*\return 0 User successfully removed
+*\return 1 User not found
+*/
+int remove_user(struct user *shared_memory, char token[TOKEN_SIZE]);
