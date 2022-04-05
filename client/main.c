@@ -7,7 +7,7 @@
 #if __APPLE__
     #define OPEN_BOARD "open ./output/board"
 #else
-    #define OPEN_BOARD "gnome -- ./output/board"
+    #define OPEN_BOARD "gnome-terminal -- ./output/board"
 #endif
 
 
