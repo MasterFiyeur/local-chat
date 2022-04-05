@@ -9,8 +9,12 @@
 #define MAX_USERS_CONNECTED 3
 // User's username length
 #define MAX_USER_USERNAME_LENGTH 10
+// User's password length
+#define MAX_USER_PASSWORD_LENGTH 10
 //Token size
 #define TOKEN_SIZE 16
+//Separator (char) between username and password
+#define USER_SEPARATOR '\t'
 
 #include <sys/mman.h>
 #include <stdio.h>

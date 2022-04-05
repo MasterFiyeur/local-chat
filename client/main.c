@@ -32,8 +32,8 @@ int main(int argc, char const *argv[]) {
     struct sockaddr_in adr_s, adr_c;
     unsigned int sock, lg;
     /* Request creation */
-    request.type = 0;
-    strcpy(request.data,"MySuper/Password");
+    request.type = 1;
+    strcpy(request.data,"MySupere\ta");
 
     sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); // Creation socket
     /* Client adress init */
