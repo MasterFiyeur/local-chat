@@ -33,20 +33,8 @@ static void handle_signals(int signals[], int count) {
     }
 }
 
-
-int main(int argc, char const *argv[]) {
-    // add signal handler for potentially-killing signals
-    int signals[6] = {SIGSTOP, SIGABRT, SIGINT, SIGQUIT, SIGTERM, SIGTSTP};
-    handle_signals(signals, sizeof(signals)/sizeof(signals[0]));
-    printf("Hello I'm the client with pid %d !\n", getpid());
-
-    char cwd[1000];
-    if (getcwd(cwd, sizeof(cwd)) != NULL) {
-        printf("Current working dir: %s\n", cwd);
-    }
-    // message pipe test
+int create_msg_pipe() {
     key_t cle = ftok("./output/board", 0);
-    printf("client: %d\n", cle);
     if (cle == -1) {
         printf("Unable to create file key:\n");
         perror("");
@@ -59,6 +47,19 @@ int main(int argc, char const *argv[]) {
         msgctl(msgid, IPC_RMID, NULL);
         exit(EXIT_FAILURE);
     }
+    return msgid;
+}
+
+
+int main(int argc, char const *argv[]) {
+    // add signal handler for potentially-killing signals
+    int signals[6] = {SIGSTOP, SIGABRT, SIGINT, SIGQUIT, SIGTERM, SIGTSTP};
+    handle_signals(signals, sizeof(signals)/sizeof(signals[0]));
+    printf("Hello I'm the client with pid %d !\n", getpid());
+
+    // message pipe test
+    int msgid = create_msg_pipe();    
+    printf("client msgid: %d\n", msgid);
 
     // launch board console in a new terminal
     char command[200];

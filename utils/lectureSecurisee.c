@@ -165,3 +165,13 @@ void clrscr()
 	/* Effacage du terminal */
 	system("clear");
 }
+
+int isNumber(char source[])
+{
+    for (int i = 0; source[i]!= '\0'; i++)
+    {
+        if (isdigit(source[i]) == 0)
+              return 0;
+    }
+    return 1;
+}
