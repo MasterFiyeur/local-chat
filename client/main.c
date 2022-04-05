@@ -49,11 +49,17 @@ int main(int argc, char const *argv[]) {
     /* Attachement socket */
     bind (sock, (struct sockaddr *) &adr_c, sizeof(adr_c));
     /* Sending informations */
+
+    /* Log in request */
     sendto (sock, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, sizeof(adr_s)); 
     lg = sizeof(adr_s);
     if (recvfrom (sock, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg)>0){
         printf("%s\n",request.data);
     }
+
+    sleep(6);
+
+    /* Log out request */
     char token[16];
     request.type = -1;
     strcpy(token,request.data);

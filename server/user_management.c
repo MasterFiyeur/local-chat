@@ -39,20 +39,12 @@ int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH]
 }
 
 int remove_user(struct user *shared_memory, char token[TOKEN_SIZE]){
-
-    //User empty
-    struct user empty_user;
-    empty_user.sock = 0;
-    strcpy(empty_user.username,"");
-    strcpy(empty_user.token,"");
-
-    for (size_t i = 0; i < MAX_USERS_CONNECTED; i++)
-    {
+    for (int i = 0; i < MAX_USERS_CONNECTED; i++){
         if (strcmp(shared_memory[i].token, token)==0){
             /* Reset access of this user */
             strcpy(shared_memory[i].token,"");
             strcpy(shared_memory[i].username,"");
-            shared_memory[i] = empty_user;
+            shared_memory[i].sock = 0;
             return 0;
         }
     }

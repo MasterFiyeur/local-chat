@@ -63,6 +63,7 @@ void *logout(void* args){
 
     char token[TOKEN_SIZE];//Token got when log in
 
+    /* Token size verification */
     if(strlen((*parent_info).request.data) != (TOKEN_SIZE-1)){ //Token doesn't have the right format
         (*parent_info).request.type = -1; 
         strcpy((*parent_info).request.data,"The token doesn't have the right format");
@@ -72,7 +73,9 @@ void *logout(void* args){
     printf("[Logout-thread] - Received data (length : %ld): %s\n", strlen(token), token); //Log
     
     /* Sending response */
-    switch (remove_user((*parent_info).shared_memory,token)){
+    strcpy(token,(*parent_info).request.data);//Setting token variable
+
+    switch (remove_user((*parent_info).shared_memory,token)){//removing user by token
     case 0://All went right
         (*parent_info).request.type = 0;
         strcpy((*parent_info).request.data,"User disconnected");
