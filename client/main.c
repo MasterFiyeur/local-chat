@@ -33,7 +33,7 @@ static void handle_signals(int signals[], int count) {
     }
 }
 
-int create_msg_pipe() {
+static int create_msg_pipe() {
     key_t cle = ftok("./output/board", 0);
     if (cle == -1) {
         printf("Unable to create file key:\n");
@@ -50,16 +50,18 @@ int create_msg_pipe() {
     return msgid;
 }
 
+static void kill_board(int msgid) {
+    stopSignal req = { 3 };
+    msgsnd(msgid, &req, sizeof(req), 0);
+}
 
 int main(int argc, char const *argv[]) {
     // add signal handler for potentially-killing signals
     int signals[6] = {SIGSTOP, SIGABRT, SIGINT, SIGQUIT, SIGTERM, SIGTSTP};
     handle_signals(signals, sizeof(signals)/sizeof(signals[0]));
-    printf("Hello I'm the client with pid %d !\n", getpid());
 
     // message pipe test
     int msgid = create_msg_pipe();    
-    printf("client msgid: %d\n", msgid);
 
     // launch board console in a new terminal
     char command[200];
@@ -69,6 +71,13 @@ int main(int argc, char const *argv[]) {
         return EXIT_FAILURE;
     }
 
+    sleep(2);
+    messageSignal req = {1, "zrunner", "hello world!" };
+    msgsnd(msgid, &req, sizeof(req), 0);
+    sleep(2);
+
+    kill_board(msgid);
+    sleep(3);
     msgctl(msgid, IPC_RMID, NULL);
 
     /* ---UDP connection--- */

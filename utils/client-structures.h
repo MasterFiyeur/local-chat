@@ -9,14 +9,17 @@
 #endif
 
 typedef struct {
-    long type;
-    char* username;
-    char* message;
-} message;
+    long type; // 1
+    char username[100];
+    char message[100];
+} messageSignal;
 
 typedef struct {
-    long type;
+    long type; // 2
     char* username;
     bool is_join;
-} move;
+} moveSignal;
 
+typedef struct {
+    long type; // 3
+} stopSignal;

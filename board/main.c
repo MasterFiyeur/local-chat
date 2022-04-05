@@ -1,8 +1,12 @@
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+#include <signal.h>
 
 #include "../utils/client-structures.h"
 #include "../utils/lectureSecurisee.h"
+#include "./threads.h"
 
 int get_msgid() {
     int buffer_size = 100;
@@ -29,10 +33,39 @@ int get_msgid() {
 
 int main(int argc, char const *argv[])
 {
-    printf("Hello I'm board where every message will be displayed !\n");
     int msgid = get_msgid();
-    printf("msgid = %d\n", msgid);
-    sleep(5);
+    
+    // create threads to receive messages
+    pid_t pid1, pid2, pid3;
+    switch ((pid1 = fork())) {
+        case 0: // child 1
+            collectMessages(msgid);
+            break;
+        default:
+            switch ((pid2 = fork())) {
+                case 0: // child 2
+                    // TODO
+                    break;
+                default:
+                    switch ((pid3 = fork())) {
+                        case 0: // child 3
+                            collectKill(msgid);
+                            break;
+                        default: // parent
+                            printf("");
+                            int status;
+                            // waitpid(pid1, &status, 0);
+                            // printf("HEY %d\n", status);
+                            // waitpid(pid2, &status, 0);
+                            // printf("HEY2 %d\n", status);
+                            waitpid(pid3, &status, 0);
+                            // only pid3 needs to be waited, as he is
+                            // the one receiving the KILL signal from client
+                            printf("\n");
+                            exit(EXIT_SUCCESS);
+                    }
+            }
+    }
 
     return 0;
 }
