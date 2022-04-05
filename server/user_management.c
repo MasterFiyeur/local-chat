@@ -40,53 +40,38 @@ int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH]
 
 
 
-int* tableDocument(char* chemin) {
+int nombreLignes(char* chemin) {
     FILE* fichier = fopen(chemin,"r");
-    int* res;
-    int lignes = 0;
+    int res = 0;
     int caractere = 0;
     int ligne;
     int compte;
     if (fichier != NULL) {
         do {
             caractere = fgetc(fichier);
-            if (caractere == 10) {lignes+=1;}
+            if (caractere == 10) {res+=1;}
         } while (caractere != EOF);
-    }
-    fclose(fichier);
-
-    res = malloc((lignes+1)*sizeof(int));
-    res[0] = lignes;
-    fichier = fopen(chemin,"r");
-    if (fichier != NULL) {
-        for(int i=1;i<=lignes;i++) {
-            caractere = 0;
-            compte = 0;
-            while(caractere != 10) {
-                compte += 1;
-                caractere = fgetc(fichier);
-            }
-            res[i] = compte;
-        }
     }
     fclose(fichier);
 
     return(res);
 }
 
-char** contenuOrganise(char* chemin, int* tableau) {
+
+char** contenuOrganise(char* chemin) {
     char** res;
-    int taille = tableau[0];
+    int taille = nombreLignes(chemin);
+    int ligne = MAX_USER_PASSWORD_LENGTH+MAX_USER_USERNAME_LENGTH+2;
     res = malloc(taille*sizeof(char*));
     for(int i=0;i<taille;i++) {
-        res[i] = malloc(tableau[i+1]*sizeof(char));
+        res[i] = malloc(ligne*sizeof(char));
     }
     
     FILE* fichier = NULL;
     fichier = fopen(chemin,"r");
     if (fichier!=NULL) {
-        for(int i = 1;i <= taille;i++) {
-            fgets(res[i-1],tableau[i],fichier);
+        for(int i = 0;i < taille;i++) {
+            fgets(res[i],ligne,fichier);
         }
     }
     fclose(fichier);
@@ -94,9 +79,8 @@ char** contenuOrganise(char* chemin, int* tableau) {
 }
 
 int cherchePseudo(char* pseudo,char* chemin) {
-    int* tableau = tableDocument(chemin);
-    int taille = tableau[0];
-    char** couples = contenuOrganise(chemin, tableau);
+    int taille = nombreLignes(chemin);
+    char** couples = contenuOrganise(chemin);
     int i=0;
     int j=0;
     for(int k=0;k<taille;k++) {
@@ -114,5 +98,6 @@ int cherchePseudo(char* pseudo,char* chemin) {
             j+=1;
         }
     }
+    free(couples);
     return(-1);
 }
