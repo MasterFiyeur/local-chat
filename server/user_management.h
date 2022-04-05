@@ -11,7 +11,7 @@
 #define MAX_USER_USERNAME_LENGTH 10
 // User's password length
 #define MAX_USER_PASSWORD_LENGTH 10
-//Token size
+//Token size (must be less than request data length)
 #define TOKEN_SIZE 16
 //Separator (char) between username and password
 #define USER_PASSWORD_SEPARATOR '\t'
@@ -40,8 +40,9 @@ char *token_generation();
 *
 *\param shared_memory Array of connected users
 *\param username Username of the user to add
+*\param token Token generated returned
 *\return 0 User successfully added
 *\return 1 Username already taken
 *\return 2 Users array is full (No index available)
 */
-int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH]);
+int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH], char** token);

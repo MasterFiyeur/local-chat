@@ -15,11 +15,11 @@ void *communication(void* args){
     while (1)
     {
         //Print shared memory which is modified in communication thread
-        /*printf("[Communication] - Shared memory : [(%s,%d,%s), (%s,%d,%s), (%s,%d,%s)]\n",
+        printf("[Communication] - Shared memory : [(%s,%d,%s), (%s,%d,%s), (%s,%d,%s)]\n",
             shared_memory[0].username, shared_memory[0].sock, shared_memory[0].token,
             shared_memory[1].username, shared_memory[1].sock, shared_memory[1].token,
             shared_memory[2].username, shared_memory[2].sock, shared_memory[2].token
-        );*/
+        );
         sleep(2);
     }
     pthread_exit(NULL);

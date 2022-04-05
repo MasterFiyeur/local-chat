@@ -33,7 +33,7 @@ int main(int argc, char const *argv[]) {
     unsigned int sock, lg;
     /* Request creation */
     request.type = 1;
-    strcpy(request.data,"MySupere\ta");
+    strcpy(request.data,"MyUser\tpassword");
 
     sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); // Creation socket
     /* Client adress init */

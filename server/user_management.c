@@ -11,7 +11,7 @@ char* token_generation(){
     return token;
 }
 
-int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH]){
+int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH], char** token){
     int i = 0;
 
     //User creation
@@ -30,6 +30,7 @@ int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH]
     {
         if (strcmp(shared_memory[i].username, "")==0){
             strcpy(new_user.token,token_generation());
+            strcpy(*token,new_user.token);
             shared_memory[i] = new_user;
             return 0;
         }
