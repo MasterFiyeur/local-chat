@@ -14,7 +14,7 @@
 //Token size
 #define TOKEN_SIZE 16
 //Separator (char) between username and password
-#define USER_SEPARATOR '\t'
+#define USER_PASSWORD_SEPARATOR '\t'
 
 #include <sys/mman.h>
 #include <stdio.h>

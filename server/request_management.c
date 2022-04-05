@@ -14,7 +14,7 @@ void *login(void* args){
 
     /* parse data to username and password */
     //Get pos of separator
-    for (separator_pos = 0; separator_pos < strlen(data) && data[separator_pos] != USER_SEPARATOR; separator_pos++);
+    for (separator_pos = 0; separator_pos < strlen(data) && data[separator_pos] != USER_PASSWORD_SEPARATOR; separator_pos++);
     
     //Check string param length
     if (separator_pos >= MAX_USER_USERNAME_LENGTH || strlen(data)-separator_pos > MAX_USER_PASSWORD_LENGTH){
