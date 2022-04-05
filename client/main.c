@@ -1,13 +1,20 @@
 #include <stdio.h>
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+
+#include <sys/msg.h>
+#include <unistd.h>
+
 #include "../utils/lectureSecurisee.h"
 #include "../utils/request.h"
 #include "../utils/signals.h"
+#include "../utils/client-structures.h"
 
 #if __APPLE__
-    #define OPEN_BOARD "open ./output/board"
+    #define OPEN_BOARD "open ./output/board --env MSGID=%i"
 #else
-    #define OPEN_BOARD "gnome-terminal -- ./output/board"
+    #define OPEN_BOARD "export MSGID=%i; gnome-terminal -- \"./output/board\""
 #endif
 
 
@@ -33,11 +40,35 @@ int main(int argc, char const *argv[]) {
     handle_signals(signals, sizeof(signals)/sizeof(signals[0]));
     printf("Hello I'm the client with pid %d !\n", getpid());
 
+    char cwd[1000];
+    if (getcwd(cwd, sizeof(cwd)) != NULL) {
+        printf("Current working dir: %s\n", cwd);
+    }
+    // message pipe test
+    key_t cle = ftok("./output/board", 0);
+    printf("client: %d\n", cle);
+    if (cle == -1) {
+        printf("Unable to create file key:\n");
+        perror("");
+        exit(EXIT_FAILURE);
+    }
+    int msgid = msgget(cle, IPC_CREAT|IPC_EXCL|0640);
+    if (msgid == -1) {
+        fprintf(stderr, "Unable to create message pipe:\n");
+        perror("");
+        msgctl(msgid, IPC_RMID, NULL);
+        exit(EXIT_FAILURE);
+    }
+
     // launch board console in a new terminal
-    if (system(OPEN_BOARD) != 0) {
+    char command[200];
+    sprintf(command, OPEN_BOARD, msgid);
+    if (system(command) != 0) {
         printf("Unable to open the board console: abort\n");
         return EXIT_FAILURE;
     }
+
+    msgctl(msgid, IPC_RMID, NULL);
 
     /* ---UDP connection--- */
     struct request request;
