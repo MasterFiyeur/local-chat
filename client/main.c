@@ -4,6 +4,12 @@
 #include "../utils/request.h"
 #include "../utils/signals.h"
 
+#if __APPLE__
+    #define OPEN_BOARD "open ./output/board"
+#else
+    #define OPEN_BOARD "gnome -- ./output/board"
+#endif
+
 
 static void handler(int sig, siginfo_t *info, void *ctx) {
     printf("Received signal %s (%d) from PID: %d\n", get_signal_name(sig), sig, info->si_pid);
@@ -26,6 +32,12 @@ int main(int argc, char const *argv[]) {
     int signals[6] = {SIGSTOP, SIGABRT, SIGINT, SIGQUIT, SIGTERM, SIGTSTP};
     handle_signals(signals, sizeof(signals)/sizeof(signals[0]));
     printf("Hello I'm the client with pid %d !\n", getpid());
+
+    // launch board console in a new terminal
+    if (system(OPEN_BOARD) != 0) {
+        printf("Unable to open the board console: abort\n");
+        return EXIT_FAILURE;
+    }
 
     /* ---UDP connection--- */
     struct request request;
