@@ -11,6 +11,11 @@ struct request_processing{
     struct user *shared_memory;
 };
 
+struct tcp_informations{
+    int sock_c;
+    struct user *shared_memory;
+};
+
 /**
 *\brief Log in an user and put it in the shared memory for make it connected
 *

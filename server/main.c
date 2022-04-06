@@ -3,17 +3,46 @@
 #include "user_management.h"
 #include "request_management.h"
 
+
+
 void* message_receiver(void* args){
-    int sock_c = *((int *)args); //Client socket
-    char message[REQUEST_DATA_MAX_LENGTH];//Received message
+    struct tcp_informations *arguments = args; //Information from communication thread
+    int sock_c = (*arguments).sock_c; //Client socket
+    char message[REQUEST_DATA_MAX_LENGTH]; //Received message
     int message_length; //Message length 
+    int memory_index = -1;//Index of the user in shared memory
+
     /* Wait to receive message */
     while((message_length = recv(sock_c,message,REQUEST_DATA_MAX_LENGTH,0)) > 0) {
         message[message_length] = '\0';
-        printf("Message received (%ld): %s\n",strlen(message),message);
+        if(memory_index == -1){//User not connected
+            //Check is the token match to a user
+            for (size_t i = 0; i < MAX_USERS_CONNECTED; i++)
+            {
+                if(strcmp(message,(*arguments).shared_memory[i].token) == 0){
+                    (*arguments).shared_memory[i].sock = sock_c;
+                    memory_index = i;
+                }
+            }
+            if(memory_index == -1){//No token correspondance found
+                strcpy(message, "You need to log in for send messages !");
+                send(sock_c,message,strlen(message),0);
+            }else{
+                strcpy(message, "You are connected to the chat !");
+                send(sock_c,message,strlen(message),0);
+            }
+        }else{//User connected
+            printf("Message received (%ld): %s\n",strlen(message),message);
+        }
     }
 
     /* Close the connection and exit */
+    close(sock_c);
+    if(memory_index != -1 && (*arguments).shared_memory[memory_index].sock == sock_c){//Check if always connected then clear the shared_memory
+        (*arguments).shared_memory[memory_index].sock = 0;
+        strcpy((*arguments).shared_memory[memory_index].token,"");
+        strcpy((*arguments).shared_memory[memory_index].username,"");
+    }
     pthread_exit(NULL);
 }
 
@@ -27,9 +56,10 @@ void* message_receiver(void* args){
 void *communication(void* args){
     struct user *shared_memory = args;
     struct sockaddr_in adr_s; //Server address
+    struct tcp_informations thread_infos;
     int sock_s = socket( AF_INET , SOCK_STREAM, 0 );//Server socket
     int sock_c = 0; //Client socket
-    pthread_t client_thread;
+    pthread_t client_thread; //Thread for wait client messages
 
     /* Init server addresses */
     bzero(&adr_s,sizeof(adr_s));
@@ -45,14 +75,22 @@ void *communication(void* args){
         printf("[Communication] - listening failed\n");
 
     while(1){
+        /* Waiting a connection */
         if( (sock_c = accept(sock_s, (struct sockaddr *)NULL,NULL)) < 0 )
             printf("[Communication] - Accept failed \n");
+        
+        /* Thread for receive all message from this client */
+        //Build object to give data
+        thread_infos.shared_memory = shared_memory;
+        thread_infos.sock_c = sock_c;
+
         printf("[Communication] - Creation message receiver thread...");
-        if (pthread_create( &client_thread, NULL, message_receiver, &sock_c)) //Thread creation
+        if (pthread_create( &client_thread, NULL, message_receiver, &thread_infos)) //Thread creation
             printf("[Client_thread] - Error during thread creation\n");
         printf("Created\n");
     }
 
+    close(sock_s);
     /* Properly end the communication thread */
     pthread_exit(NULL);
 }

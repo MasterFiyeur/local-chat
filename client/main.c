@@ -19,10 +19,26 @@ static void handle_signals(int signals[], int count) {
     }
 }
 
+void *receive_msg(void *socket)
+{
+    int sock = *((int *)socket);
+    char message[REQUEST_DATA_MAX_LENGTH];
+    int len;
+    // client thread always ready to receive message
+    while((len = recv(sock,message,REQUEST_DATA_MAX_LENGTH,0)) > 0) {
+        message[len] = '\0';
+        /* Send it to nommed pipe */
+        printf("Message reçu (%ld): %s\n",strlen(message),message);
+    }
+
+    pthread_exit(NULL);
+}
+
 void *TCP_connexion(void* args){
     char message[REQUEST_DATA_MAX_LENGTH]; //Message wrote by user
     int sock = socket( AF_INET, SOCK_STREAM,0); //Client socket
     struct sockaddr_in adr_s; //Server address
+    pthread_t receiver; //Thread that will receive messages
 
     printf("I'm the TCP connexion\n");
 
@@ -37,6 +53,9 @@ void *TCP_connexion(void* args){
         printf("Connection to socket failed.\n");
         exit(0);
     }
+
+    //Creating a thread for receive messages from server
+    pthread_create(&receiver, NULL, receive_msg, &sock);
 
     int end = 1;
     printf("/exit -> Quit the connexion \n");
