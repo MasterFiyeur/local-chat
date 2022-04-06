@@ -32,10 +32,16 @@ void* message_receiver(void* args){
                 send(sock_c,message,strlen(message),0);
             }
         }else{//User connected
+            if( strcmp(message,"/logout") == 0 ){ //If deconnection
+                /* Sending /logout for disconnect nommed pipe */
+                strcpy(message, "/logout");
+                send(sock_c,message,strlen(message),0);
+                break;
+            }
             printf("Message received (%ld): %s\n",strlen(message),message);
         }
     }
-
+    printf("[client_thread] - Closing TCP connexion %d\n",memory_index);
     /* Close the connection and exit */
     close(sock_c);
     if(memory_index != -1 && (*arguments).shared_memory[memory_index].sock == sock_c){//Check if always connected then clear the shared_memory

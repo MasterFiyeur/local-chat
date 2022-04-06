@@ -8,7 +8,7 @@ int is_command(char* message, char* command){
     return 0;
 }
 
-void login(char message[REQUEST_DATA_MAX_LENGTH],char* token, struct sockaddr_in adr_s, struct sockaddr_in adr_c, int udp_socket, int tcp_socket){
+void login(char message[REQUEST_DATA_MAX_LENGTH],char* token, struct sockaddr_in adr_s, int udp_socket, int tcp_socket){
     struct request request;
     unsigned int lg = sizeof(adr_s);
     /* Building request */
@@ -18,12 +18,33 @@ void login(char message[REQUEST_DATA_MAX_LENGTH],char* token, struct sockaddr_in
     /* Log in request (UDP) */
     sendto (udp_socket, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, sizeof(adr_s)); 
 
+    /* Receiving token */
     if (recvfrom (udp_socket, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg)>0){
-        if(request.type == 0){
+        if(request.type == 0){//Send token to tcp server
             strcpy(token,request.data);
             write(tcp_socket, request.data, strlen(request.data));
-            //TODO check username empty
-        }else{
+        }else{// Wrong username/login
+            printf("%s\n",request.data);
+        }
+    }
+}
+
+void logout(char* token, struct sockaddr_in adr_s, int udp_socket, int tcp_socket, int* exit_status){
+    struct request request;
+    unsigned int lg = sizeof(adr_s);
+    /* Building request */
+    request.type = -1;
+    strcpy(request.data,token);
+
+    /* Send request */
+    sendto (udp_socket, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, sizeof(adr_s));
+
+    /* Receiving confirmation */
+    if (recvfrom (udp_socket, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg)>0){
+        if(request.type == 0){//Send deconnection to tcp server
+            write(tcp_socket, LOGOUT_COMMAND, strlen(LOGOUT_COMMAND));
+            *exit_status = 1;
+        }else{// Wrong token
             printf("%s\n",request.data);
         }
     }
@@ -56,10 +77,11 @@ int commande_detection(char message[REQUEST_DATA_MAX_LENGTH], int* exit_status, 
                 printf("Example use : /login MyUser MyPass\n");
             }else{
                 //Necessite TCP_socket to send message
-                login(message,&(*token), adr_s,adr_c, sock, tcp_sock);
+                login(message,&(*token), adr_s, sock, tcp_sock);
             }
         }else if (is_command(message,LOGOUT_COMMAND)){
-            printf("Command logout !\n");
+                //Necessite TCP_socket to send message
+                logout(token, adr_s, sock, tcp_sock, exit_status);
         }else if (is_command(message,CREATE_ACCOUNT_COMMAND)){
             printf("Command create account\n");
         }else if (is_command(message,DELETE_ACCOUNT_COMMAND)){

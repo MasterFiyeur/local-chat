@@ -28,6 +28,13 @@ void *receive_msg(void *socket)
     // client thread always ready to receive message
     while((len = recv(sock,message,REQUEST_DATA_MAX_LENGTH,0)) > 0) {
         message[len] = '\0';
+        /* If connection ended */
+        if(strcmp(message,LOGOUT_COMMAND) == 0){
+            printf("Good Bye.\n");
+            //TODO : end connexion to pipe
+            break;
+        }
+
         /* Send it to nommed pipe */
         printf("Message reçu (%ld): %s\n",strlen(message),message);
     }
@@ -41,6 +48,7 @@ void *TCP_connexion(void* args){
     struct sockaddr_in adr_s; //Server address
     pthread_t receiver; //Thread that will receive messages
     char token[TOKEN_SIZE];
+    strcpy(token,"");
 
     printf("I'm the TCP connexion\n");
 

@@ -28,6 +28,8 @@
  */
 int is_command(char* message, char* command);
 
-void login(char message[REQUEST_DATA_MAX_LENGTH],char* token, struct sockaddr_in adr_s, struct sockaddr_in adr_c, int udp_socket, int tcp_socket);
+void login(char message[REQUEST_DATA_MAX_LENGTH],char* token, struct sockaddr_in adr_s, int udp_socket, int tcp_socket);
+
+void logout(char* token, struct sockaddr_in adr_s, int udp_socket, int tcp_socket, int* exit_status);
 
 int commande_detection(char message[REQUEST_DATA_MAX_LENGTH], int* exit_status, char* token, int tcp_sock);

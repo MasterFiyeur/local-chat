@@ -33,7 +33,6 @@ void *login(void* args){
     /* Copy username and password from data */
     strncpy(username,data,separator_pos);
     strncpy(password,&data[separator_pos]+1,strlen(data)-separator_pos);
-    printf("Username (%ld): %s\nPassword (%ld): %s\nPosition : %d\n",strlen(username),username,strlen(password),password,separator_pos);
 
     //TODO : Check username/password in file
 
