@@ -15,7 +15,7 @@ void *login(void* args){
 
     /* parse data to username and password */
     //Get pos of separator
-    for (separator_pos = 0; separator_pos < strlen(data) && data[separator_pos] != USER_PASSWORD_SEPARATOR; separator_pos++);
+    for (separator_pos = 0; separator_pos < strlen(data) && data[separator_pos] != USER_PASSWORD_REQUEST_SEPARATOR; separator_pos++);
     
     //Check string param length
     if (separator_pos >= MAX_USER_USERNAME_LENGTH || strlen(data)-separator_pos > MAX_USER_PASSWORD_LENGTH){
@@ -23,7 +23,7 @@ void *login(void* args){
         strcpy((*parent_info).request.data,"Username or password are too long");
         sendto ((*parent_info).sock, (void *) &(*parent_info).request, sizeof(struct request), 0, (struct sockaddr *) &(*parent_info).adr_client, sizeof((*parent_info).adr_client));
         pthread_exit(NULL);
-    }else if (separator_pos == 0 || separator_pos == strlen(data)-1){
+    }else if (separator_pos == 0 || separator_pos == strlen(data) || separator_pos == strlen(data)-1){
         (*parent_info).request.type = -1; //There is an error
         strcpy((*parent_info).request.data,"Username or password are empty");
         sendto ((*parent_info).sock, (void *) &(*parent_info).request, sizeof(struct request), 0, (struct sockaddr *) &(*parent_info).adr_client, sizeof((*parent_info).adr_client));
@@ -32,7 +32,7 @@ void *login(void* args){
     
     /* Copy username and password from data */
     strncpy(username,data,separator_pos);
-    strncpy(password,&data[separator_pos]+1,strlen(data)-separator_pos);    
+    strncpy(password,&data[separator_pos]+1,strlen(data)-separator_pos);
 
     //TODO : Check username/password in file
 
@@ -151,7 +151,7 @@ void *connected_users(void* args){
             bool_empty_list = 0; //Detected one user
             strcat(connected_list,(*parent_info).shared_memory[i].username);
             connected_list[strlen(connected_list)+1] = '\0'; //Adding end string char
-            connected_list[strlen(connected_list)] = USER_PASSWORD_SEPARATOR; //Adding separator (same as username/password)
+            connected_list[strlen(connected_list)] = USER_PASSWORD_FILE_SEPARATOR; //Adding separator (same as username/password)
         }
     }
     connected_list[strlen(connected_list)-1] = '\0'; //replacing last separator by end-string character

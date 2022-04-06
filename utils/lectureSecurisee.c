@@ -107,7 +107,9 @@ int saisieString(char* str_chaine,int int_taille){
 	/* Demande tant que la chaine n'est pas de la bonne taille */
 	}while(int_tailleReelle > int_taille || int_tailleReelle==1);
 	/* Copie intégrale de la chaine*/
-	strcpy(str_chaine,ligne);
+	strncpy(str_chaine,ligne,int_tailleReelle-1);
+	str_chaine[int_tailleReelle-1] = '\0';
+
 	/* Renvoi de la taille */
 	return(int_tailleReelle);
 }

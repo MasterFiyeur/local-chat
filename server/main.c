@@ -4,24 +4,129 @@
 #include "request_management.h"
 
 /**
-*\brief This function used by a thread will manage TCP connection for write and read messages between clients
-    It should verify that the user is logged
+*\brief Send a message to every connected users
+*
+*\param message Message to send to everybody
+*\param shared_memory Connected users
+*\param sender_memory_index Index in shared_memory of sender users
+ */
+void broadcastMessage(char message[REQUEST_DATA_MAX_LENGTH],struct user *shared_memory,int sender_memory_index){
+    char broadcast_message[REQUEST_DATA_MAX_LENGTH+MAX_USER_USERNAME_LENGTH+2];//Request data length + Max username length + ": "
+    /* Build message adding username */
+    sprintf(broadcast_message,"%s: %s",shared_memory[sender_memory_index].username,message);
+    /* Send message to every connected users */
+    for (size_t i = 0; i < MAX_USERS_CONNECTED; i++)
+    {
+        if(shared_memory[i].sock != 0){
+            send(shared_memory[i].sock,broadcast_message,strlen(broadcast_message),0);
+        }
+    }
+}
+
+/**
+*\brief Thread consecrated to only one connection, it receives messages, manage login with token
+* It also call the function to send the message to every connected users
+*
+*\param args 
+*\return void* Nothing
+*/
+void* message_receiver(void* args){
+    struct tcp_informations *arguments = args; //Information from communication thread
+    int sock_c = (*arguments).sock_c; //Client socket
+    char message[REQUEST_DATA_MAX_LENGTH]; //Received message
+    int message_length; //Message length 
+    int memory_index = -1;//Index of the user in shared memory
+
+    /* Wait to receive message */
+    while((message_length = recv(sock_c,message,REQUEST_DATA_MAX_LENGTH,0)) > 0) {
+        message[message_length] = '\0';
+        if(memory_index == -1){//User not connected
+            //Check is the token match to a user
+            for (size_t i = 0; i < MAX_USERS_CONNECTED; i++)
+            {
+                if(strcmp(message,(*arguments).shared_memory[i].token) == 0){
+                    (*arguments).shared_memory[i].sock = sock_c;
+                    memory_index = i;
+                }
+            }
+            if(memory_index == -1){//No token correspondance found
+                strcpy(message, "You need to log in for send messages !");
+                send(sock_c,message,strlen(message),0);
+            }else{
+                strcpy(message, "You are connected to the chat !");
+                send(sock_c,message,strlen(message),0);
+            }
+        }else{//User connected
+            if( strcmp(message,"/logout") == 0 ){ // Deconnection
+                /* Sending /logout for disconnect nommed pipe */
+                strcpy(message, "/logout");
+                send(sock_c,message,strlen(message),0);
+                break;
+            }//Normal message
+            printf("Message received (%ld): %s\n",strlen(message),message);
+            broadcastMessage(message,(*arguments).shared_memory,memory_index);
+        }
+    }
+    printf("[client_thread] - Closing TCP connexion %d\n",memory_index);
+    /* Close the connection and exit */
+    close(sock_c);
+    if(memory_index != -1 && (*arguments).shared_memory[memory_index].sock == sock_c){//Check if always connected then clear the shared_memory
+        (*arguments).shared_memory[memory_index].sock = 0;
+        strcpy((*arguments).shared_memory[memory_index].token,"");
+        strcpy((*arguments).shared_memory[memory_index].username,"");
+    }
+    pthread_exit(NULL);
+}
+
+/**
+*\brief This function used by a thread will manage TCP connection affect a thread to each client
 *
 *\param args [struct user *] shared memory of connected users with the request manager thread
 *\return void* Nothing
- */
+*/
 void *communication(void* args){
     struct user *shared_memory = args;
-    while (1)
-    {
-        //Print shared memory which is modified in communication thread
-        printf("[Communication] - Shared memory : [(%s,%d,%s), (%s,%d,%s), (%s,%d,%s)]\n",
-            shared_memory[0].username, shared_memory[0].sock, shared_memory[0].token,
-            shared_memory[1].username, shared_memory[1].sock, shared_memory[1].token,
-            shared_memory[2].username, shared_memory[2].sock, shared_memory[2].token
-        );
-        sleep(2);
+    struct sockaddr_in adr_s; //Server address
+    struct tcp_informations thread_infos;
+    int sock_s = socket( AF_INET , SOCK_STREAM, 0 );//Server socket
+    int sock_c = 0; //Client socket
+    pthread_t client_thread; //Thread for wait client messages
+
+    /* Init server addresses */
+    bzero(&adr_s,sizeof(adr_s));
+    adr_s.sin_family = AF_INET;
+    adr_s.sin_port = htons(TCP_PORT);
+    adr_s.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    /* Server init */
+    if( bind( sock_s, (struct sockaddr *)&adr_s, sizeof(adr_s)) == -1 ){
+        printf("[Communication] - Cannot bind server\n");
+        exit(EXIT_FAILURE);
     }
+
+    if( listen( sock_s ,REQUEST_DATA_MAX_LENGTH ) == -1 ){
+        printf("[Communication] - listening failed\n");
+        exit(EXIT_FAILURE);
+    }
+
+    while(1){
+        /* Waiting a connection */
+        if( (sock_c = accept(sock_s, (struct sockaddr *)NULL,NULL)) < 0 )
+            printf("[Communication] - Accept failed \n");
+        
+        /* Thread for receive all message from this client */
+        //Build object to give data
+        thread_infos.shared_memory = shared_memory;
+        thread_infos.sock_c = sock_c;
+
+        printf("[Communication] - Creation message receiver thread...");
+        if (pthread_create( &client_thread, NULL, message_receiver, &thread_infos)) //Thread creation
+            printf("[Client_thread] - Error during thread creation\n");
+        printf("Created\n");
+    }
+
+    close(sock_s);
+    /* Properly end the communication thread */
     pthread_exit(NULL);
 }
 
@@ -118,7 +223,6 @@ int main(int argc, char const *argv[])
         shared_memory[i].sock = 0;
     }
 
-    
     printf("Hello I'm the server !\n");
     
     /* Communication thread creation */
@@ -126,9 +230,6 @@ int main(int argc, char const *argv[])
     if (pthread_create( &com, NULL, communication, (void*)shared_memory))
         printf("\nError during thread creation\n");
     printf("Created\n");
-
-    //Create gap between 2 threads
-    sleep(1);
 
     /* Request manager thread creation */
     printf("Creation request thread...");

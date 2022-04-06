@@ -5,22 +5,15 @@
 
 #pragma once
 
-// Number of user that can be connected at the same time
-#define MAX_USERS_CONNECTED 3
-// User's username length
-#define MAX_USER_USERNAME_LENGTH 10
-// User's password length
-#define MAX_USER_PASSWORD_LENGTH 10
-//Token size (must be less than request data length)
-#define TOKEN_SIZE 16
-//Separator (char) between username and password
-#define USER_PASSWORD_SEPARATOR '\t'
-
 #include <sys/mman.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "../utils/request.h"
+
+// Number of user that can be connected at the same time
+#define MAX_USERS_CONNECTED 3
 
 struct user{
     char username[MAX_USER_USERNAME_LENGTH]; //Username of the user
