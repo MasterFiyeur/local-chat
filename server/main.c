@@ -47,8 +47,7 @@ void* message_receiver(void* args){
 }
 
 /**
-*\brief This function used by a thread will manage TCP connection for write and read messages between clients
-    It should verify that the user is logged
+*\brief This function used by a thread will manage TCP connection affect a thread to each client
 *
 *\param args [struct user *] shared memory of connected users with the request manager thread
 *\return void* Nothing

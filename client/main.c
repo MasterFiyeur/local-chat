@@ -2,6 +2,7 @@
 #include "../utils/lectureSecurisee.h"
 #include "../utils/request.h"
 #include "../utils/signals.h"
+#include "commands.h"
 
 
 static void handler(int sig, siginfo_t *info, void *ctx) {
@@ -57,21 +58,19 @@ void *TCP_connexion(void* args){
     //Creating a thread for receive messages from server
     pthread_create(&receiver, NULL, receive_msg, &sock);
 
-    int end = 1;
+    int exit_status = 0;
     printf("/exit -> Quit the connexion \n");
-    while (end == 1){
+    while (exit_status == 0){
         saisieString(message, REQUEST_DATA_MAX_LENGTH);
-        printf("Voici le message envoyé (%ld): %s\n",strlen(message),message);
-        if (strcmp(message,"/exit")==0){
-            end = 0;
-        }else{
+        if(commande_detection(message, &exit_status) == 0){//There is no command
+            printf("Voici le message envoyé (%ld): %s\n",strlen(message),message);
             write(sock, message, strlen(message));
         }
     }
 
     /* Properly end the client */
     close(sock);
-    
+    printf("Connection ended !\n");
     pthread_exit(NULL);
 }
 
@@ -86,27 +85,27 @@ int main(int argc, char const *argv[]) {
     printf("Hello I'm the client with pid %d !\n", getpid());
 
     /* ---UDP connection--- */
-    // struct request request;
-    // struct sockaddr_in adr_s, adr_c;
-    // unsigned int sock, lg;
-    // /* Request creation */
-    // request.type = 1;
-    // strcpy(request.data,"MyUser\tpassword");
+    struct request request;
+    struct sockaddr_in adr_s, adr_c;
+    unsigned int sock, lg;
+    /* Request creation */
+    request.type = 1;
+    strcpy(request.data,"MyUser\tpassword");
 
-    // sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); // Creation socket
-    // /* Client adress init */
-    // bzero(&adr_c,sizeof(adr_c));
-    // adr_c.sin_family = AF_INET; 
-    // adr_c.sin_port = htons(UDP_PORT);
-    // adr_c.sin_addr.s_addr = htonl(INADDR_ANY);
-    // /* Server adress init */
-    // bzero(&adr_s,sizeof(adr_s));
-    // adr_s.sin_family = AF_INET;
-    // adr_s.sin_port = htons(UDP_PORT);
-    // adr_s.sin_addr.s_addr = htonl(INADDR_ANY);
-    // /* Attachement socket */
-    // bind(sock, (struct sockaddr *) &adr_c, sizeof(adr_c));
-    // /* Sending informations */
+    sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); // Creation socket
+    /* Client adress init */
+    bzero(&adr_c,sizeof(adr_c));
+    adr_c.sin_family = AF_INET; 
+    adr_c.sin_port = htons(UDP_PORT);
+    adr_c.sin_addr.s_addr = htonl(INADDR_ANY);
+    /* Server adress init */
+    bzero(&adr_s,sizeof(adr_s));
+    adr_s.sin_family = AF_INET;
+    adr_s.sin_port = htons(UDP_PORT);
+    adr_s.sin_addr.s_addr = htonl(INADDR_ANY);
+    /* Attachement socket */
+    bind(sock, (struct sockaddr *) &adr_c, sizeof(adr_c));
+    /* Sending informations */
 
     // /* Log in request */
     // sendto (sock, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, sizeof(adr_s)); 
