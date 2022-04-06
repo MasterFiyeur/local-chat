@@ -15,11 +15,11 @@ void *communication(void* args){
     while (1)
     {
         //Print shared memory which is modified in communication thread
-        /*printf("[Communication] - Shared memory : [(%s,%d,%s), (%s,%d,%s), (%s,%d,%s)]\n",
+        printf("[Communication] - Shared memory : [(%s,%d,%s), (%s,%d,%s), (%s,%d,%s)]\n",
             shared_memory[0].username, shared_memory[0].sock, shared_memory[0].token,
             shared_memory[1].username, shared_memory[1].sock, shared_memory[1].token,
             shared_memory[2].username, shared_memory[2].sock, shared_memory[2].token
-        );*/
+        );
         sleep(2);
     }
     pthread_exit(NULL);
@@ -73,22 +73,18 @@ void *request_manager(void* args){
                     break;
                 case -1://log out
                     printf("[Request_manager] - Log out thread creation...\n");
-
                     thread_function = logout; // function for log out
                     break;
                 case 2://creation of account
                     printf("[Request_manager] - Account-creation thread creation...\n");
-
                     thread_function = account_creation; // function for create an account
                     break;
                 case -2://deletion of account
                     printf("[Request_manager] - Account-deletion thread creation...\n");
-
                     thread_function = account_deletion; // function for delete an account
                     break;
                 default://connected users list
                     printf("[Request_manager] - connected_users thread creation...\n");
-
                     thread_function = connected_users; // function send list of connected users
                     break;
             }

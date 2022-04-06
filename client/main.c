@@ -32,8 +32,8 @@ int main(int argc, char const *argv[]) {
     struct sockaddr_in adr_s, adr_c;
     unsigned int sock, lg;
     /* Request creation */
-    request.type = 0;
-    strcpy(request.data,"MySuper/Password");
+    request.type = 1;
+    strcpy(request.data,"MyUser\tpassword");
 
     sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); // Creation socket
     /* Client adress init */
@@ -49,6 +49,31 @@ int main(int argc, char const *argv[]) {
     /* Attachement socket */
     bind(sock, (struct sockaddr *) &adr_c, sizeof(adr_c));
     /* Sending informations */
+
+    /* Log in request */
+    sendto (sock, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, sizeof(adr_s)); 
+    lg = sizeof(adr_s);
+    if (recvfrom (sock, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg)>0){
+        printf("%s\n",request.data);
+    }
+    char token[16];
+    strcpy(token,request.data);
+
+    sleep(3);
+
+    /* User list */
+    request.type = 0;
+    sendto (sock, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, sizeof(adr_s)); 
+    lg = sizeof(adr_s);
+    if (recvfrom (sock, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg)>0){
+        printf("%s\n",request.data);
+    }
+
+    sleep(6);
+
+    /* Log out request */
+    request.type = -1;
+    strcpy(request.data,token);
     sendto (sock, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, sizeof(adr_s)); 
     lg = sizeof(adr_s);
 
