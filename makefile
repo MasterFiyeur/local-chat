@@ -1,12 +1,9 @@
 #Nom des programme
 CLIENT = client
-BOARD = board
 SERVER = server
 
 #Repertoire des sources et entete du projet partie client
 clientdir=client
-#Repertoire des sources et entete du projet affichage des messages
-boarddir=board
 #Repertoire des sources et entete du projet partie serveur
 serverdir=server
 
@@ -20,7 +17,6 @@ all : compile
 
 compile : 
 	cd $(clientdir) && $(MAKE)
-	cd $(boarddir) && $(MAKE)
 	cd $(serverdir) && $(MAKE)
 
 .PHONY : clean server client board
@@ -33,5 +29,3 @@ server :
 	@$(bindir)$(SERVER)
 client :
 	@$(bindir)$(CLIENT)
-board :
-	@$(bindir)$(BOARD)
