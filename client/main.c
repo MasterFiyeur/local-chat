@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <signal.h>
 #include "../utils/lectureSecurisee.h"
 #include "../utils/request.h"
 #include "../utils/signals.h"
@@ -21,16 +20,38 @@ static void handle_signals(int signals[], int count) {
 }
 
 void *TCP_connexion(void* args){
-
     char message[REQUEST_DATA_MAX_LENGTH]; //Message wrote by user
+    int sock = socket( AF_INET, SOCK_STREAM,0); //Client socket
+    char send_msg[REQUEST_DATA_MAX_LENGTH]; //Message to receive
+    struct sockaddr_in adr_s; //Server address
 
     printf("I'm the TCP connexion\n");
-    while (1)
-    {
-        //printf("My message :");
-        saisieString(message,5);
-        printf("Input string : %s\n",message);
+
+    /* Server address init */
+    bzero(&adr_s,sizeof(adr_s));
+    adr_s.sin_port = htons(TCP_PORT);
+    adr_s.sin_family= AF_INET;
+    adr_s.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    /* Make the connexion */
+    if ((connect( sock ,(struct sockaddr *)&adr_s,sizeof(adr_s))) == -1 ){
+        printf("Connection to socket failed.\n");
+        exit(0);
     }
+
+    int end = 1;
+    while (end == 1){
+        printf("taper \"/exit\" pour quitter \n");
+        saisieString(message, REQUEST_DATA_MAX_LENGTH);
+        if (strcmp(message,"/exit")==0){
+            end = 0;
+        }else{
+            write(sock, message, strlen(message));
+        }
+    }
+
+    /* Properly end the client */
+    close(sock);
     
     pthread_exit(NULL);
 }
