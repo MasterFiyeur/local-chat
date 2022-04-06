@@ -36,14 +36,12 @@ static void handle_signals(int signals[], int count) {
 static int create_msg_pipe() {
     key_t cle = ftok("./output/board", 0);
     if (cle == -1) {
-        printf("Unable to create file key:\n");
-        perror("");
+        perror("Unable to create file key");
         exit(EXIT_FAILURE);
     }
     int msgid = msgget(cle, IPC_CREAT|IPC_EXCL|0640);
     if (msgid == -1) {
-        fprintf(stderr, "Unable to create message pipe:\n");
-        perror("");
+        perror("Unable to create message pipe:");
         msgctl(msgid, IPC_RMID, NULL);
         exit(EXIT_FAILURE);
     }
@@ -51,8 +49,9 @@ static int create_msg_pipe() {
 }
 
 static void kill_board(int msgid) {
-    stopSignal req = { 3 };
-    msgsnd(msgid, &req, sizeof(req), 0);
+    stopSignal req = { 3, 0 };
+    size_t s = sizeof(req) - sizeof(long);
+    msgsnd(msgid, &req, s, 0);
 }
 
 int main(int argc, char const *argv[]) {
@@ -67,17 +66,39 @@ int main(int argc, char const *argv[]) {
     char command[200];
     sprintf(command, OPEN_BOARD, msgid);
     if (system(command) != 0) {
-        printf("Unable to open the board console: abort\n");
+        fprintf(stderr, "Unable to open the board console: abort\n");
         return EXIT_FAILURE;
     }
 
-    sleep(2);
-    messageSignal req = {1, "zrunner", "hello world!" };
-    msgsnd(msgid, &req, sizeof(req), 0);
+    // user joined the chat
+    stopSignal req1 = {3, 1};
+    msgsnd(msgid, &req1, sizeof(req1) - sizeof(long), 0);
     sleep(2);
 
+    // zrunner says hello world
+    messageSignal req2 = {1, "zrunner", "hello world!"};
+    msgsnd(msgid, &req2, sizeof(req2) - sizeof(long), 0);
+    sleep(1);
+    
+    // théo joined the chat
+    moveSignal req3 = {2, "Théo", true};
+    msgsnd(msgid, &req3, sizeof(req3) - sizeof(long), 0);
+    sleep(1);
+
+    // théo says salut
+    messageSignal req4 = {1, "Théo", "Salut !"};
+    msgsnd(msgid, &req4, sizeof(req4) - sizeof(long), 0);
+    sleep(1);
+
+    // user left the chat
+    stopSignal req5 = {3, 2};
+    msgsnd(msgid, &req5, sizeof(req5) - sizeof(long), 0);
+    sleep(1);
+
+    // close board
     kill_board(msgid);
     sleep(3);
+
     msgctl(msgid, IPC_RMID, NULL);
 
     /* ---UDP connection--- */

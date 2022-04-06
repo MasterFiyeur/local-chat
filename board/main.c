@@ -44,12 +44,12 @@ int main(int argc, char const *argv[])
         default:
             switch ((pid2 = fork())) {
                 case 0: // child 2
-                    // TODO
+                    collectMoves(msgid);
                     break;
                 default:
                     switch ((pid3 = fork())) {
                         case 0: // child 3
-                            collectKill(msgid);
+                            collectSignals(msgid);
                             break;
                         default: // parent
                             printf("");

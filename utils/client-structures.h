@@ -16,10 +16,11 @@ typedef struct {
 
 typedef struct {
     long type; // 2
-    char* username;
+    char username[100];
     bool is_join;
 } moveSignal;
 
 typedef struct {
     long type; // 3
+    int signal; // 0: STOP, 1: connected, 2: disconnected
 } stopSignal;
