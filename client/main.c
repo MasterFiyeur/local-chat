@@ -80,7 +80,6 @@ void *TCP_connexion(void* args){
 }
 
 
-
 int main(int argc, char const *argv[]) {
     pthread_t tcp_connect; //TCP connection
 

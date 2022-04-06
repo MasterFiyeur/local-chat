@@ -59,6 +59,40 @@ void logout(char* token, struct sockaddr_in adr_s, int udp_socket, int tcp_socke
     }
 }
 
+void connectedUsers(struct sockaddr_in adr_s, int udp_socket){
+    struct request request;
+    unsigned int lg = sizeof(adr_s);
+    int counter = 1;
+
+    /* Building request */
+    request.type = 0;
+    strcpy(request.data,"");
+
+    /* Send request */
+    sendto (udp_socket, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, sizeof(adr_s));
+
+    /* Receiving list */
+    if (recvfrom (udp_socket, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg)>0){
+        if(request.type == 0){//Display connected users
+            /* Print users username */
+            printf("User 1 : ");
+            for (size_t i = 0; i < strlen(request.data); i++)
+            {
+                if(request.data[i] == '\t'){
+                    counter++;
+                    printf("\nUser %d : ",counter);
+                }else{
+                    printf("%c",request.data[i]);
+                }
+            }
+            printf("\n");
+        }else{// Something went wrong
+            printf("%s\n",request.data);
+        }
+    }
+
+}
+
 int commande_detection(char message[REQUEST_DATA_MAX_LENGTH], int* exit_status, char* token, int tcp_sock){
     /* ---UDP connection--- */
     struct sockaddr_in adr_s, adr_c; //server and client addresses
@@ -96,7 +130,7 @@ int commande_detection(char message[REQUEST_DATA_MAX_LENGTH], int* exit_status, 
         }else if (is_command(message,DELETE_ACCOUNT_COMMAND)){
             printf("Command delete account\n");
         }else if (is_command(message,LIST_COMMAND)){
-            printf("Command list\n");
+            connectedUsers(adr_s,sock);
         }else if (is_command(message,EXIT_COMMAND)){
             *exit_status = 1;
         }else if (is_command(message,HELP_COMMAND)){
