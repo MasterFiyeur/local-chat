@@ -1,49 +1,56 @@
 // define functions used by board threads (one per message type)
 
 #include "threads.h"
+#include <pthread.h>
 #include <stdio.h>
 #include <sys/msg.h>
 
-void collectMessages(int msgid) {
+void* collectMessages(void* arg) {
+    int msgid = (size_t) arg;
     messageSignal req;
     size_t size = sizeof(req) - sizeof(long);
     while (1) {
         if (msgrcv(msgid, &req, size, 1, 0) == -1) {
             perror("P1: Error receiving request");
-            return;
+            return NULL;
         }
         printf("%s: %s\n", req.username, req.message);
     }
+    pthread_exit(0);
 }
 
-void collectMoves(int msgid) {
+void* collectMoves(void* arg) {
+    int msgid = (size_t) arg;
     moveSignal req;
     size_t size = sizeof(req) - sizeof(long);
     while (1) {
         if (msgrcv(msgid, &req, size, 2, 0) == -1) {
             perror("P2: Error receiving request");
-            return;
+            return NULL;
         }
         if (req.is_join)
             printf("%s joined the chat\n", req.username);
         else
             printf("%s left the chat\n", req.username);
     }
+    pthread_exit(0);
 }
 
-void collectSignals(int msgid) {
+void* collectSignals(void* arg) {
+    int msgid = (size_t) arg;
     stopSignal req;
     size_t size = sizeof(req) - sizeof(long);
     while (1) {
         if (msgrcv(msgid, &req, size, 3, 0) == -1) {
             perror("P3: Error receiving request");
-            return;
+            return NULL;
         }
         switch (req.signal) {
             case 0:
                 printf("Closing console...\n");
                 // exit(EXIT_SUCCESS);
-                return;
+                pthread_exit(0);
+                return NULL;
             case 1:
                 printf("You joined the chat\n");
                 break;
@@ -54,4 +61,5 @@ void collectSignals(int msgid) {
                 printf("unknown signal\n");
         }
     }
+    pthread_exit(0);
 }

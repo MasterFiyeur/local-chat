@@ -7,18 +7,18 @@
  * 
  * @param msgid The message queue ID to receive events from
  */
-void collectMessages(int msgid);
+void* collectMessages(void* arg);
 
 /**
  * @brief Manage users joining and leaving the chat
  * 
  * @param msgid The message queue ID to receive events from
  */
-void collectMoves(int msgid);
+void* collectMoves(void* arg);
 
 /**
  * @brief Manage specific signals (user connected/disconnected, board closing)
  * 
  * @param msgid The message queue ID to receive events from
  */
-void collectSignals(int msgid);
+void* collectSignals(void* arg);

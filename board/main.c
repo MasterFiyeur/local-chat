@@ -34,38 +34,32 @@ int get_msgid() {
 int main(int argc, char const *argv[])
 {
     int msgid = get_msgid();
+    pthread_t thread1, thread2, thread3;
+    int status;
     
     // create threads to receive messages
-    pid_t pid1, pid2, pid3;
-    switch ((pid1 = fork())) {
-        case 0: // child 1
-            collectMessages(msgid);
-            break;
-        default:
-            switch ((pid2 = fork())) {
-                case 0: // child 2
-                    collectMoves(msgid);
-                    break;
-                default:
-                    switch ((pid3 = fork())) {
-                        case 0: // child 3
-                            collectSignals(msgid);
-                            break;
-                        default: // parent
-                            printf("");
-                            int status;
-                            // waitpid(pid1, &status, 0);
-                            // printf("HEY %d\n", status);
-                            // waitpid(pid2, &status, 0);
-                            // printf("HEY2 %d\n", status);
-                            waitpid(pid3, &status, 0);
-                            // only pid3 needs to be waited, as he is
-                            // the one receiving the KILL signal from client
-                            printf("\n");
-                            exit(EXIT_SUCCESS);
-                    }
-            }
+    // Thread 1: signal handler
+    status = pthread_create(&thread1, NULL, collectSignals, (void*) (size_t) msgid);
+    if (status != 0) {
+        perror("Error creating thread 1");
     }
+    // Thread 2: messages display
+    status = pthread_create(&thread2, NULL, collectMessages, (void*) (size_t) msgid);
+    if (status != 0) {
+        perror("Error creating thread 2");
+    }
+    // Thread 3: members joining and leaving
+    status = pthread_create(&thread3, NULL, collectMoves, (void*) (size_t) msgid);
+    if (status != 0) {
+        perror("Error creating thread 3");
+    }
+    
+    // join first thread
+    pthread_join(thread1, NULL);
+    
+    // when thread 1 has finished, we can kill the others
+    pthread_kill(thread2, SIGKILL);
+    pthread_kill(thread3, SIGKILL);
 
-    return 0;
+    return EXIT_SUCCESS;
 }
