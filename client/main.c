@@ -42,6 +42,7 @@ void *TCP_connexion(void* args){
     printf("/exit -> Quit the connexion \n");
     while (end == 1){
         saisieString(message, REQUEST_DATA_MAX_LENGTH);
+        printf("Voici le message envoyé (%ld): %s\n",strlen(message),message);
         if (strcmp(message,"/exit")==0){
             end = 0;
         }else{

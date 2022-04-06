@@ -6,10 +6,10 @@
 void* message_receiver(void* args){
     int sock_c = *((int *)args); //Client socket
     char message[REQUEST_DATA_MAX_LENGTH];//Received message
-
+    int message_length; //Message length 
     /* Wait to receive message */
-    while((recv(sock_c,message,REQUEST_DATA_MAX_LENGTH,0)) > 0) {
-        message[REQUEST_DATA_MAX_LENGTH] = '\0';
+    while((message_length = recv(sock_c,message,REQUEST_DATA_MAX_LENGTH,0)) > 0) {
+        message[message_length] = '\0';
         printf("Message received (%ld): %s\n",strlen(message),message);
     }
 
@@ -50,6 +50,7 @@ void *communication(void* args){
         printf("[Communication] - Creation message receiver thread...");
         if (pthread_create( &client_thread, NULL, message_receiver, &sock_c)) //Thread creation
             printf("[Client_thread] - Error during thread creation\n");
+        printf("Created\n");
     }
 
     /* Properly end the communication thread */
