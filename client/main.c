@@ -56,13 +56,24 @@ int main(int argc, char const *argv[]) {
     if (recvfrom (sock, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg)>0){
         printf("%s\n",request.data);
     }
+    char token[16];
+    strcpy(token,request.data);
+
+    sleep(3);
+
+    /* User list */
+    request.type = 0;
+    sendto (sock, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, sizeof(adr_s)); 
+    lg = sizeof(adr_s);
+    if (recvfrom (sock, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg)>0){
+        printf("%s\n",request.data);
+    }
 
     sleep(6);
 
     /* Log out request */
-    char token[16];
     request.type = -1;
-    strcpy(token,request.data);
+    strcpy(request.data,token);
     sendto (sock, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, sizeof(adr_s)); 
     lg = sizeof(adr_s);
     if (recvfrom (sock, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg)>0){

@@ -39,6 +39,7 @@ int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH]
 }
 
 int remove_user(struct user *shared_memory, char token[TOKEN_SIZE]){
+    //Check all the shared memory to find which user has this token
     for (int i = 0; i < MAX_USERS_CONNECTED; i++){
         if (strcmp(shared_memory[i].token, token)==0){
             /* Reset access of this user */

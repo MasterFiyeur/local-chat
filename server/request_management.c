@@ -129,17 +129,43 @@ void *account_deletion(void* args){
 void *connected_users(void* args){
     /* Request informations */
     struct request_processing *parent_info = args;
-
-    char data[REQUEST_DATA_MAX_LENGTH];
-    strcpy(data,(*parent_info).request.data);//Put request data in data
-
-    printf("[Connected_users-thread] - Received data (length : %ld): %s\n", strlen(data), data); //Log
     
-    //TODO : Make the deletion of the account (using Alan's code)
-    strcpy((*parent_info).request.data,"ok");
+    char connected_list[REQUEST_DATA_MAX_LENGTH]; //String of all connected usernames
+    strcpy(connected_list,"");
+    int bool_empty_list = 1; //If there is at least one user connected
 
-    /* Sending response */
-    sendto ((*parent_info).sock, (void *) &(*parent_info).request, sizeof(struct request), 0, (struct sockaddr *) &(*parent_info).adr_client, sizeof((*parent_info).adr_client)); 
+    printf("[Connected_users-thread] - Received data (length : %ld): %s\n", strlen((*parent_info).request.data), (*parent_info).request.data); //Log
+
+    /* Size Verification */
+    if(MAX_USERS_CONNECTED*MAX_USER_USERNAME_LENGTH > REQUEST_DATA_MAX_LENGTH){ //Size verification
+        //The request may not contains all usernames
+        (*parent_info).request.type = -1; 
+        strcpy((*parent_info).request.data,"Request data is too short (modify it in server side)");
+        sendto ((*parent_info).sock, (void *) &(*parent_info).request, sizeof(struct request), 0, (struct sockaddr *) &(*parent_info).adr_client, sizeof((*parent_info).adr_client)); 
+    }
+
+    /* Build response*/
+    for (size_t i = 0; i < MAX_USERS_CONNECTED; i++)
+    {
+        if (strcmp((*parent_info).shared_memory[i].username,"") != 0){
+            bool_empty_list = 0; //Detected one user
+            strcat(connected_list,(*parent_info).shared_memory[i].username);
+            connected_list[strlen(connected_list)+1] = '\0'; //Adding end string char
+            connected_list[strlen(connected_list)] = USER_PASSWORD_SEPARATOR; //Adding separator (same as username/password)
+        }
+    }
+    connected_list[strlen(connected_list)-1] = '\0'; //replacing last separator by end-string character
     
+    /* Send response */
+    if (bool_empty_list){ //Empty list
+        (*parent_info).request.type = 0; 
+        strcpy((*parent_info).request.data,"Nobody is connected");
+        sendto ((*parent_info).sock, (void *) &(*parent_info).request, sizeof(struct request), 0, (struct sockaddr *) &(*parent_info).adr_client, sizeof((*parent_info).adr_client)); 
+    }else{
+        (*parent_info).request.type = 0; 
+        strcpy((*parent_info).request.data,connected_list);
+        sendto ((*parent_info).sock, (void *) &(*parent_info).request, sizeof(struct request), 0, (struct sockaddr *) &(*parent_info).adr_client, sizeof((*parent_info).adr_client)); 
+    }
+
     pthread_exit(NULL);
 }
