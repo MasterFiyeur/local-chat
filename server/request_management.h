@@ -20,7 +20,7 @@ struct tcp_informations{
 *\brief Log in an user and put it in the shared memory for make it connected
 *
 * Exemple request data : MyUser/Password
-* There is need to have the character of separation (USER_PASSWORD_SEPARATOR) and username/password length less than max constants
+* There is need to have the character of separation (USER_PASSWORD_REQUEST_SEPARATOR) and username/password length less than max constants
 *
 *\param args [struct request_processing] all infomations that a thread needs to respond to a request
 *\return void* Nothing

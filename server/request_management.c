@@ -15,7 +15,7 @@ void *login(void* args){
 
     /* parse data to username and password */
     //Get pos of separator
-    for (separator_pos = 0; separator_pos < strlen(data) && data[separator_pos] != USER_PASSWORD_SEPARATOR; separator_pos++);
+    for (separator_pos = 0; separator_pos < strlen(data) && data[separator_pos] != USER_PASSWORD_REQUEST_SEPARATOR; separator_pos++);
     
     //Check string param length
     if (separator_pos >= MAX_USER_USERNAME_LENGTH || strlen(data)-separator_pos > MAX_USER_PASSWORD_LENGTH){
@@ -151,7 +151,7 @@ void *connected_users(void* args){
             bool_empty_list = 0; //Detected one user
             strcat(connected_list,(*parent_info).shared_memory[i].username);
             connected_list[strlen(connected_list)+1] = '\0'; //Adding end string char
-            connected_list[strlen(connected_list)] = USER_PASSWORD_SEPARATOR; //Adding separator (same as username/password)
+            connected_list[strlen(connected_list)] = USER_PASSWORD_FILE_SEPARATOR; //Adding separator (same as username/password)
         }
     }
     connected_list[strlen(connected_list)-1] = '\0'; //replacing last separator by end-string character
