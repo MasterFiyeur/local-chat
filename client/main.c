@@ -22,7 +22,6 @@ static void handle_signals(int signals[], int count) {
 void *TCP_connexion(void* args){
     char message[REQUEST_DATA_MAX_LENGTH]; //Message wrote by user
     int sock = socket( AF_INET, SOCK_STREAM,0); //Client socket
-    char send_msg[REQUEST_DATA_MAX_LENGTH]; //Message to receive
     struct sockaddr_in adr_s; //Server address
 
     printf("I'm the TCP connexion\n");
@@ -40,8 +39,8 @@ void *TCP_connexion(void* args){
     }
 
     int end = 1;
+    printf("/exit -> Quit the connexion \n");
     while (end == 1){
-        printf("taper \"/exit\" pour quitter \n");
         saisieString(message, REQUEST_DATA_MAX_LENGTH);
         if (strcmp(message,"/exit")==0){
             end = 0;

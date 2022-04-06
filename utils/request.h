@@ -6,6 +6,7 @@
 #pragma once
 
 #define UDP_PORT 2058
+#define TCP_PORT 2059
 #define REQUEST_DATA_MAX_LENGTH 128
 
 struct request

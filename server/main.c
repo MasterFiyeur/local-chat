@@ -3,6 +3,20 @@
 #include "user_management.h"
 #include "request_management.h"
 
+void* message_receiver(void* args){
+    int sock_c = *((int *)args); //Client socket
+    char message[REQUEST_DATA_MAX_LENGTH];//Received message
+
+    /* Wait to receive message */
+    while((recv(sock_c,message,REQUEST_DATA_MAX_LENGTH,0)) > 0) {
+        message[REQUEST_DATA_MAX_LENGTH] = '\0';
+        printf("Message received (%ld): %s\n",strlen(message),message);
+    }
+
+    /* Close the connection and exit */
+    pthread_exit(NULL);
+}
+
 /**
 *\brief This function used by a thread will manage TCP connection for write and read messages between clients
     It should verify that the user is logged
@@ -12,16 +26,33 @@
  */
 void *communication(void* args){
     struct user *shared_memory = args;
-    while (1)
-    {
-        //Print shared memory which is modified in communication thread
-        printf("[Communication] - Shared memory : [(%s,%d,%s), (%s,%d,%s), (%s,%d,%s)]\n",
-            shared_memory[0].username, shared_memory[0].sock, shared_memory[0].token,
-            shared_memory[1].username, shared_memory[1].sock, shared_memory[1].token,
-            shared_memory[2].username, shared_memory[2].sock, shared_memory[2].token
-        );
-        sleep(2);
+    struct sockaddr_in adr_s; //Server address
+    int sock_s = socket( AF_INET , SOCK_STREAM, 0 );//Server socket
+    int sock_c = 0; //Client socket
+    pthread_t client_thread;
+
+    /* Init server addresses */
+    bzero(&adr_s,sizeof(adr_s));
+    adr_s.sin_family = AF_INET;
+    adr_s.sin_port = htons(TCP_PORT);
+    adr_s.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    /* Server init */
+    if( bind( sock_s, (struct sockaddr *)&adr_s, sizeof(adr_s)) == -1 )
+        printf("[Communication] - Cannot bind server\n");
+
+    if( listen( sock_s ,REQUEST_DATA_MAX_LENGTH ) == -1 )
+        printf("[Communication] - listening failed\n");
+
+    while(1){
+        if( (sock_c = accept(sock_s, (struct sockaddr *)NULL,NULL)) < 0 )
+            printf("[Communication] - Accept failed \n");
+        printf("[Communication] - Creation message receiver thread...");
+        if (pthread_create( &client_thread, NULL, message_receiver, &sock_c)) //Thread creation
+            printf("[Client_thread] - Error during thread creation\n");
     }
+
+    /* Properly end the communication thread */
     pthread_exit(NULL);
 }
 
