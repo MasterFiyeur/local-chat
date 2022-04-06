@@ -22,6 +22,7 @@ void login(char message[REQUEST_DATA_MAX_LENGTH],char* token, struct sockaddr_in
         if(request.type == 0){
             strcpy(token,request.data);
             write(tcp_socket, request.data, strlen(request.data));
+            //TODO check username empty
         }else{
             printf("%s\n",request.data);
         }
