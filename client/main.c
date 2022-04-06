@@ -20,71 +20,99 @@ static void handle_signals(int signals[], int count) {
     }
 }
 
+void *TCP_connexion(void* args){
+
+    char message[REQUEST_DATA_MAX_LENGTH]; //Message wrote by user
+
+    printf("I'm the TCP connexion\n");
+    while (1)
+    {
+        //printf("My message :");
+        saisieString(message,5);
+        printf("Input string : %s\n",message);
+    }
+    
+    pthread_exit(NULL);
+}
+
+
 
 int main(int argc, char const *argv[]) {
+    pthread_t tcp_connect; //TCP connection
+
     // add signal handler for potentially-killing signals
     int signals[6] = {SIGSTOP, SIGABRT, SIGINT, SIGQUIT, SIGTERM, SIGTSTP};
-    handle_signals(signals, sizeof(signals)/sizeof(signals[0]));
+    //handle_signals(signals, sizeof(signals)/sizeof(signals[0]));
     printf("Hello I'm the client with pid %d !\n", getpid());
 
     /* ---UDP connection--- */
-    struct request request;
-    struct sockaddr_in adr_s, adr_c;
-    unsigned int sock, lg;
-    /* Request creation */
-    request.type = 1;
-    strcpy(request.data,"MyUser\tpassword");
+    // struct request request;
+    // struct sockaddr_in adr_s, adr_c;
+    // unsigned int sock, lg;
+    // /* Request creation */
+    // request.type = 1;
+    // strcpy(request.data,"MyUser\tpassword");
 
-    sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); // Creation socket
-    /* Client adress init */
-    bzero(&adr_c,sizeof(adr_c));
-    adr_c.sin_family = AF_INET; 
-    adr_c.sin_port = htons(UDP_PORT);
-    adr_c.sin_addr.s_addr = htonl(INADDR_ANY);
-    /* Server adress init */
-    bzero(&adr_s,sizeof(adr_s));
-    adr_s.sin_family = AF_INET;
-    adr_s.sin_port = htons(UDP_PORT);
-    adr_s.sin_addr.s_addr = htonl(INADDR_ANY);
-    /* Attachement socket */
-    bind(sock, (struct sockaddr *) &adr_c, sizeof(adr_c));
-    /* Sending informations */
+    // sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); // Creation socket
+    // /* Client adress init */
+    // bzero(&adr_c,sizeof(adr_c));
+    // adr_c.sin_family = AF_INET; 
+    // adr_c.sin_port = htons(UDP_PORT);
+    // adr_c.sin_addr.s_addr = htonl(INADDR_ANY);
+    // /* Server adress init */
+    // bzero(&adr_s,sizeof(adr_s));
+    // adr_s.sin_family = AF_INET;
+    // adr_s.sin_port = htons(UDP_PORT);
+    // adr_s.sin_addr.s_addr = htonl(INADDR_ANY);
+    // /* Attachement socket */
+    // bind(sock, (struct sockaddr *) &adr_c, sizeof(adr_c));
+    // /* Sending informations */
 
-    /* Log in request */
-    sendto (sock, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, sizeof(adr_s)); 
-    lg = sizeof(adr_s);
-    if (recvfrom (sock, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg)>0){
-        printf("%s\n",request.data);
-    }
-    char token[16];
-    strcpy(token,request.data);
+    // /* Log in request */
+    // sendto (sock, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, sizeof(adr_s)); 
+    // lg = sizeof(adr_s);
+    // if (recvfrom (sock, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg)>0){
+    //     printf("%s\n",request.data);
+    // }
+    // char token[16];
+    // strcpy(token,request.data);
 
-    sleep(3);
+    // sleep(3);
 
-    /* User list */
-    request.type = 0;
-    sendto (sock, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, sizeof(adr_s)); 
-    lg = sizeof(adr_s);
-    if (recvfrom (sock, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg)>0){
-        printf("%s\n",request.data);
-    }
+    // /* User list */
+    // request.type = 0;
+    // sendto (sock, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, sizeof(adr_s)); 
+    // lg = sizeof(adr_s);
+    // if (recvfrom (sock, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg)>0){
+    //     printf("%s\n",request.data);
+    // }
 
-    sleep(6);
+    // sleep(6);
 
-    /* Log out request */
-    request.type = -1;
-    strcpy(request.data,token);
-    sendto (sock, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, sizeof(adr_s)); 
-    lg = sizeof(adr_s);
+    // /* Log out request */
+    // request.type = -1;
+    // strcpy(request.data,token);
+    // sendto (sock, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, sizeof(adr_s)); 
+    // lg = sizeof(adr_s);
 
-    struct request response;
-    ssize_t status = recvfrom(sock, &response, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg);
-    if (status == -1){
-        printf("Unable to receive message\n");
-        return EXIT_FAILURE;
-    }
-    //Close socket
-    close(sock);
+    // struct request response;
+    // ssize_t status = recvfrom(sock, &response, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg);
+    // if (status == -1){
+    //     printf("Unable to receive message\n");
+    //     return EXIT_FAILURE;
+    // }
+    // //Close socket
+    // close(sock);
+
+    /* Creation of TCP connexion manager */
+    printf("Creation TCP thread...");
+    if (pthread_create( &tcp_connect, NULL, TCP_connexion, NULL))
+        printf("\nError during thread creation\n");
+    printf("Created\n");
+
+
+    /* Join TCP connexion manager manager thread */
+    pthread_join( tcp_connect, NULL);
 
     return 0;
 }
