@@ -4,6 +4,7 @@ output/*
 
 # IDE
 .vscode
+.DS_Store
 
 # Prerequisites
 *.d
