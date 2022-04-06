@@ -1,5 +1,14 @@
 #include "commands.h"
 
+void printHelp(){
+    printf("%s -> Log in to the server\n",LOGIN_COMMAND);
+    printf("%s -> Log out from the server\n",LOGOUT_COMMAND);
+    printf("%s -> Create an account\n",CREATE_ACCOUNT_COMMAND);
+    printf("%s -> Delete an account\n",DELETE_ACCOUNT_COMMAND);
+    printf("%s -> Get a list of connected users\n",LIST_COMMAND);
+    printf("%s -> Quit the program\n",EXIT_COMMAND);
+}
+
 int is_command(char* message, char* command){
     if((strncmp(message,command,strlen(command)) == 0) 
         && (message[strlen(command)] == ' ' || message[strlen(command)] == '\0')){
@@ -90,6 +99,8 @@ int commande_detection(char message[REQUEST_DATA_MAX_LENGTH], int* exit_status, 
             printf("Command list\n");
         }else if (is_command(message,EXIT_COMMAND)){
             *exit_status = 1;
+        }else if (is_command(message,HELP_COMMAND)){
+            printHelp();
         }else{
             printf("Command not recognized.\n");
         }

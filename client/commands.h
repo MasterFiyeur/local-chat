@@ -17,6 +17,10 @@
 #define LIST_COMMAND "/list"
 //To exit the program
 #define EXIT_COMMAND "/exit"
+//Print help commands
+#define HELP_COMMAND "/help"
+
+void printHelp();
 
 /**
 *\brief Check if a message start with a specific command

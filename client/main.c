@@ -30,13 +30,13 @@ void *receive_msg(void *socket)
         message[len] = '\0';
         /* If connection ended */
         if(strcmp(message,LOGOUT_COMMAND) == 0){
-            printf("Good Bye.\n");
+            printf("[Message receiver] - Good Bye.\n");
             //TODO : end connexion to pipe
             break;
         }
 
         /* Send it to nommed pipe */
-        printf("Message reçu (%ld): %s\n",strlen(message),message);
+        printf("Message from the server (%ld): %s\n",strlen(message),message);
     }
 
     pthread_exit(NULL);
@@ -46,11 +46,10 @@ void *TCP_connexion(void* args){
     char message[REQUEST_DATA_MAX_LENGTH]; //Message wrote by user
     int sock = socket( AF_INET, SOCK_STREAM,0); //Client socket
     struct sockaddr_in adr_s; //Server address
+    int exit_status = 0;//Exit while condition
     pthread_t receiver; //Thread that will receive messages
     char token[TOKEN_SIZE];
     strcpy(token,"");
-
-    printf("I'm the TCP connexion\n");
 
     /* Server address init */
     bzero(&adr_s,sizeof(adr_s));
@@ -66,20 +65,17 @@ void *TCP_connexion(void* args){
 
     //Creating a thread for receive messages from server
     pthread_create(&receiver, NULL, receive_msg, &sock);
-
-    int exit_status = 0;
-    printf("/exit -> Quit the connexion \n");
+    printHelp();//Print help menu
     while (exit_status == 0){
         saisieString(message, REQUEST_DATA_MAX_LENGTH);
         if(commande_detection(message, &exit_status,&(*token),sock) == 0){//There is no command
-            printf("Voici le message envoyé (%ld): %s\n",strlen(message),message);
             write(sock, message, strlen(message));
         }
     }
 
     /* Properly end the client */
     close(sock);
-    printf("Connection ended !\n");
+    printf("[TCP-connexion] - Connection ended !\n");
     pthread_exit(NULL);
 }
 
