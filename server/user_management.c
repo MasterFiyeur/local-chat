@@ -39,65 +39,84 @@ int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH]
 
 
 
-
-int nombreLignes(char* chemin) {
-    FILE* fichier = fopen(chemin,"r");
+int numberOfLines(char* path) {
+    FILE* file = fopen(path,"r");
     int res = 0;
-    int caractere = 0;
-    int ligne;
-    int compte;
-    if (fichier != NULL) {
+    int target = 0;
+    int line;
+    if (file != NULL) {
         do {
-            caractere = fgetc(fichier);
-            if (caractere == 10) {res+=1;}
-        } while (caractere != EOF);
+            target = fgetc(file);
+            if (target == 10) {res+=1;}
+        } while (target != EOF);
     }
-    fclose(fichier);
+    fclose(file);
 
     return(res);
 }
 
 
-char** contenuOrganise(char* chemin) {
+char** listOfCouples(char* path) {
     char** res;
-    int taille = nombreLignes(chemin);
-    int ligne = MAX_USER_PASSWORD_LENGTH+MAX_USER_USERNAME_LENGTH+2;
-    res = malloc(taille*sizeof(char*));
-    for(int i=0;i<taille;i++) {
-        res[i] = malloc(ligne*sizeof(char));
+    int length = numberOfLines(path);
+    res = malloc(2*length*sizeof(char*));
+    for(int i=0;i<length;i++) {
+        res[2*i] = malloc(MAX_USER_USERNAME_LENGTH*sizeof(char));
+        res[2*i+1] = malloc(MAX_USER_PASSWORD_LENGTH*sizeof(char));
     }
     
-    FILE* fichier = NULL;
-    fichier = fopen(chemin,"r");
-    if (fichier!=NULL) {
-        for(int i = 0;i < taille;i++) {
-            fgets(res[i],ligne,fichier);
+    FILE* file = NULL;
+    file = fopen(path,"r");
+    if (file!=NULL) {
+        for(int i = 0;i < length;i++) {
+            fscanf(file,"%s\t%s\n",res[2*i],res[2*i+1]);
         }
     }
-    fclose(fichier);
+    fclose(file);
     return(res);
 }
 
-int cherchePseudo(char* pseudo,char* chemin) {
-    int taille = nombreLignes(chemin);
-    char** couples = contenuOrganise(chemin);
-    int i=0;
-    int j=0;
-    for(int k=0;k<taille;k++) {
-        j=0;
-        while (couples[k][j] != '\t') {
-            if (pseudo[i] == couples[k][j]) {
-                i += 1;
-            }
-            else {
-                i = 0;
-            }
-            if (pseudo[i] == '\0') {
+int findNickname(char* pseudo, char* password, char* path, int checkPass) { 
+    /*checkpass : 0 -> doesn't check the password and returns the position of the nickname | 1 -> check the password and returns 0 if it doesn't fit, 1 if it fits*/
+    int length = numberOfLines(path);
+    char** couples = listOfCouples(path);
+    for(int k=0;k<length;k++) {
+        if (strcmp(couples[2*k],pseudo) == 0) {
+            if (checkPass == 0) {
+                free(couples);
                 return(k);
             }
-            j+=1;
+            else {
+                return((strcmp(couples[2*k+1],password)==0));
+            }
         }
     }
     free(couples);
     return(-1);
+}
+
+void creation(char* nickname,char* password,char* path) {
+    if (findNickname(nickname,"",path,0) == -1) {
+        FILE* file = NULL;
+        file = fopen(path,"a");
+        if (file!=NULL) {
+            fprintf(file,"%s\t%s\n",nickname,password);
+        }
+    }
+    else {printf("The nickname already exists !\n");}
+}
+
+void delete(char* nickname,char* path){
+    char** couples = listOfCouples(path);
+    int length = numberOfLines(path);
+    int var = findNickname(nickname,"",path,0);
+    if (var != -1) {
+        FILE* file = NULL;
+        file = fopen(path,"w+");
+        for (int i=0;i<length;i++) {
+            if (i != var) {
+                fprintf(file,"%s\t%s\n",couples[2*i],couples[2*i+1]);
+            }
+        }
+    }
 }

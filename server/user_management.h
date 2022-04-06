@@ -45,6 +45,8 @@ char *token_generation();
 int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH]);
 
 
-int* tableDocument(char* chemin); /*renvoie un tableau avec en indice 0 la taille du tableau, et le reste le nombre de caractères à la nième ligne*/
-char** contenuOrganise(char* chemin, int* tableau);
-int cherchePseudo(char* pseudo, char* chemin);
+int numberOfLines(char* path); /*returns the number of lines of the csv*/
+char** listOfCouples(char* path); /*returns a list having one line per nickname and password of the csv*/
+int findNickname(char* pseudo, char* password, char* path, int checkPass); /*checks if the nickname exists, or if the password matches the nickname*/
+void creation(char* nickname,char* password,char* path); /*adds a line in the csv containing the datas, if the nickname doesn't exist yet*/
+void delete(char* nickname,char* path); /*deletes the line containing the given nickname in the csv*/
