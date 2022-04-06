@@ -128,6 +128,8 @@ static void kill_board(int msgid) {
 }
 
 int main(int argc, char const *argv[]) {
+    pthread_t tcp_connect; //TCP connection
+    
     // add signal handler for potentially-killing signals
     int signals[6] = {SIGSTOP, SIGABRT, SIGINT, SIGQUIT, SIGTERM, SIGTSTP};
     handle_signals(signals, sizeof(signals)/sizeof(signals[0]));
