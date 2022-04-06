@@ -32,5 +32,5 @@ struct request
     * -2 delete account
     * 0 get current connected users
     */
-    char data[REQUEST_DATA_MAX_LENGTH];
+    char data[REQUEST_DATA_MAX_LENGTH]; //Data sent with request
 };

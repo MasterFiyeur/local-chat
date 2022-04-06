@@ -20,6 +20,12 @@ static void handle_signals(int signals[], int count) {
     }
 }
 
+/**
+*\brief Thread which receive each message from the server and will transfer it to board processus
+*
+*\param socket TCP socket to listen for new messages
+*\return void* Nothing
+*/
 void *receive_msg(void *socket)
 {
     int sock = *((int *)socket);
@@ -41,13 +47,19 @@ void *receive_msg(void *socket)
     pthread_exit(NULL);
 }
 
+/**
+*\brief Creation of TCP socket and interception of each connection to affect a thread to connexion
+*
+*\param args NULL
+*\return void* Nothing
+ */
 void *TCP_connexion(void* args){
     char message[REQUEST_DATA_MAX_LENGTH]; //Message wrote by user
     int sock = socket( AF_INET, SOCK_STREAM,0); //Client socket
     struct sockaddr_in adr_s; //Server address
     int exit_status = 0;//Exit while condition
     pthread_t receiver; //Thread that will receive messages
-    char token[TOKEN_SIZE];
+    char token[TOKEN_SIZE]; //Connexion token
     strcpy(token,"");
 
     /* Server address init */
