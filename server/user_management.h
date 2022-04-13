@@ -17,7 +17,7 @@
 // Number of user that can be connected at the same time
 #define MAX_USERS_CONNECTED 3
 //File of account's username/password
-#define ACCOUNT_FILE "users.csv"
+#define ACCOUNT_FILE "users.txt"
 
 struct user{
     char username[MAX_USER_USERNAME_LENGTH]; //Username of the user
@@ -28,9 +28,9 @@ struct user{
 /**
 *\brief Generate a random token (with alphanumeric characters)
 *
-*\return char* token of size TOKEN_SIZE
+*\param char* res of size TOKEN_SIZE, generated token is returned
  */
-char *token_generation();
+void token_generation(char* res);
 
 /**
 *\brief Add user to the shared_memory (array of connected users)
@@ -42,7 +42,7 @@ char *token_generation();
 *\return 1 Username already taken
 *\return 2 Users array is full (No index available)
 */
-int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH], char** token);
+int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH], char* token);
 
 /**
 *\brief Remove user from the shared_memory (array of connected users)

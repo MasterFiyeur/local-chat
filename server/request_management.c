@@ -6,7 +6,7 @@ void *login(void* args){
 
     int separator_pos;//Index of the separator
     char username[MAX_USER_USERNAME_LENGTH], password[MAX_USER_PASSWORD_LENGTH];//Username and password got from request
-    char *token = malloc(TOKEN_SIZE*sizeof(char));//Token generated
+    char token[TOKEN_SIZE];//Token generated
 
     char data[REQUEST_DATA_MAX_LENGTH];
     strcpy(data,(*parent_info).request.data);//Put request data in data
@@ -35,14 +35,13 @@ void *login(void* args){
     username[separator_pos]='\0';
     strncpy(password,&data[separator_pos]+1,strlen(data)-separator_pos);
 
-    printf("login - findNickname(%s,%s,%s,1) = %d\n",username,password,ACCOUNT_FILE,findNickname(username,password,ACCOUNT_FILE,1));
-    if(/*findNickname(username,password,ACCOUNT_FILE,1)*/1 != 1){
+    if(findNickname(username,password,ACCOUNT_FILE,1) != 1){
         (*parent_info).request.type = -1; 
         strcpy((*parent_info).request.data,"Wrong username/password");
         sendto ((*parent_info).sock, (void *) &(*parent_info).request, sizeof(struct request), 0, (struct sockaddr *) &(*parent_info).adr_client, sizeof((*parent_info).adr_client)); 
     }else{
         /* Adding user to the shared memory */
-        switch (add_user((*parent_info).shared_memory,username,&token)){
+        switch (add_user((*parent_info).shared_memory,username,&(*token))){
         case 0://All went right
             (*parent_info).request.type = 0;
             strcpy((*parent_info).request.data,token);
@@ -60,7 +59,6 @@ void *login(void* args){
             break;
         }
     }
-
     pthread_exit(NULL);
 }
 

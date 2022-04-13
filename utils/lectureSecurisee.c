@@ -114,23 +114,6 @@ int saisieString(char* str_chaine,int int_taille){
 	return(int_tailleReelle);
 }
 
-char* getAbsolutePath(char* path){
-	char cwd[400];
-	printf("Parsing path\n");
-    char *absolute_path = malloc(512 * sizeof(char));
-    getcwd(cwd, sizeof(cwd));
-    if(strlen(cwd) > 7 && strcmp(&cwd[strlen(cwd)-7],"/server") == 0){
-        strncpy(absolute_path,cwd,strlen(cwd)-7);
-    }else{
-		strcpy(absolute_path,cwd);
-	}
-	absolute_path[strlen(absolute_path)+1] = '\0';
-	absolute_path[strlen(absolute_path)] = '/';
-	strcat(absolute_path,path);
-	printf("Path : %s\n",absolute_path);
-	return absolute_path;
-}
-
 int * creationTab(int *int_taille){
     /* Declaration du tableau dynamique */
     int *pint_tab;

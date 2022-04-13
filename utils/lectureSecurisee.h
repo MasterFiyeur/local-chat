@@ -62,14 +62,6 @@ float saisieFloat();
 int saisieString(char* str_chaine,int int_taille);
 
 /**
-*\brief Create an absolute path that remove /server if the server is launch from server directory
-*
-*\param path file in tcp-chat directory
-*\return char* absolute path with the path param at the end
- */
-char* getAbsolutePath(char* path);
-
-/**
 *\brief Creation et remplissage d'un tableau
 *\param int_taille Taille du tableau qui sera renvoyée
 *\return Tableau créée et initialisé

@@ -1,6 +1,6 @@
 #include "user_management.h"
 
-char* token_generation(){
+void token_generation(char* res){
     char *token;
     token = malloc(TOKEN_SIZE*sizeof(char));
     const char *alphanum = "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789";
@@ -8,10 +8,10 @@ char* token_generation(){
     {
         token[i] = alphanum[rand()%strlen(alphanum)];
     }
-    return token;
+    strcpy(res,token);
 }
 
-int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH], char** token){
+int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH], char* token){
     int i = 0;
 
     //User creation
@@ -29,8 +29,8 @@ int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH]
     for (i = 0; i < MAX_USERS_CONNECTED; i++)
     {
         if (strcmp(shared_memory[i].username, "")==0){
-            strcpy(new_user.token,token_generation());
-            strcpy(*token,new_user.token);
+            token_generation(&(*token));
+            strcpy(new_user.token,token);
             shared_memory[i] = new_user;
             return 0;
         }
@@ -65,9 +65,8 @@ int numberOfLines(char* path) {
         } while (target != EOF);
     }
     fclose(file);
-    return(1);
+    return(res);
 }
-
 
 char** listOfCouples(char* path) {
     char** res;
@@ -93,19 +92,24 @@ int findNickname(char* nickname, char* password, char* path, int checkPass) {
     /*checkpass : 0 -> doesn't check the password and returns the position of the nickname | 1 -> check the password and returns 0 if it doesn't fit, 1 if it fits*/
     int length = numberOfLines(path);
     char** couples = listOfCouples(path);
+    int res = -1;
     for(int k=0;k<length;k++) {
         if (strcmp(couples[2*k],nickname) == 0) {
             if (checkPass == 0) {
+                res = k;
                 free(couples);
-                return(k);
             }
             else if (checkPass == 1) {
-                return((strcmp(couples[2*k+1],password)==0));
+                res = (strcmp(couples[2*k+1],password)==0);
             }
         }
     }
+    for (size_t i = 0; i < length; i++)
+    {
+        free(couples[i]);
+    }
     free(couples);
-    return(-1);
+    return(res);
 }
 
 int creation(char* nickname,char* password,char* path) {
@@ -140,8 +144,12 @@ int delete(char* nickname,char* path){
             }
         }
         fclose(file);
+        for (size_t i = 0; i < length; i++)
+            free(couples[i]);
         return 1;
     }else{
+        for (size_t i = 0; i < length; i++)
+            free(couples[i]);
         return 0;
     }
 }
