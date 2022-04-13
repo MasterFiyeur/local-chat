@@ -45,7 +45,16 @@ char *token_generation();
 int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH], char** token);
 
 /**
-<<<<<<< HEAD
+*\brief Remove user from the shared_memory (array of connected users)
+*
+*\param shared_memory Array of connected users
+*\param token Token of the user to remove(got when log in)
+*\return 0 User successfully removed
+*\return 1 User not found
+*/
+int remove_user(struct user *shared_memory, char token[TOKEN_SIZE]);
+
+/**
 *\brief returns the number of lines of the csv
 *
 *\param path Path of the .csv
@@ -74,16 +83,6 @@ char** listOfCouples(char* path);
 *\return 1 if the password does match
 */
 int findNickname(char* nickname, char* password, char* path, int checkPass);
-=======
-*\brief Remove user from the shared_memory (array of connected users)
-*
-*\param shared_memory Array of connected users
-*\param token Token of the user to remove(got when log in)
-*\return 0 User successfully removed
-*\return 1 User not found
-*/
-int remove_user(struct user *shared_memory, char token[TOKEN_SIZE]);
->>>>>>> 5e3bf6df5d780985bd6d1636faa9cbe5594feff5
 
 /**
 *\brief writes down the combination nickname password in the .csv
