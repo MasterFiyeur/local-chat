@@ -20,7 +20,7 @@
 
 
 static void handler(int sig, siginfo_t *info, void *ctx) {
-    printf("Received signal %s (%d) from PID: %d\n", get_signal_name(sig), sig, info->si_pid);
+    printf("Received signal %s (%d)\n", get_signal_name(sig), sig);
     // close()
 }
 
