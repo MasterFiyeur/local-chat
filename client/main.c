@@ -86,7 +86,7 @@ void *receive_msg(void *socket)
                 break;
         }
     }
-    pthread_exit(NULL);
+    return NULL;
 }
 
 /**
@@ -99,7 +99,7 @@ void *TCP_connexion(void* args){
     char message[REQUEST_DATA_MAX_LENGTH]; //Message wrote by user
     int sock = socket( AF_INET, SOCK_STREAM,0); //Client socket
     struct sockaddr_in adr_s; //Server address
-    int exit_status = 0;//Exit while condition
+    int exit_status = 0; //Exit while condition
     pthread_t receiver; //Thread that will receive messages
     char token[TOKEN_SIZE]; //Connexion token
     strcpy(token, "");
@@ -110,20 +110,20 @@ void *TCP_connexion(void* args){
     adr_s.sin_family= AF_INET;
     adr_s.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-    /* Make the connexion */
-    if ((connect( sock ,(struct sockaddr *)&adr_s,sizeof(adr_s))) == -1 ){
+    /* Establish the connection */
+    if ((connect( sock ,(struct sockaddr *)&adr_s,sizeof(adr_s))) == -1 ) {
         printf("Connection to socket failed.\n");
         exit(0);
     }
 
-    //Creating a thread for receive messages from server
+    // create a thread to receive messages from server
     pthread_create(&receiver, NULL, receive_msg, &sock);
-    printHelp();//Print help menu
+    printHelp(); // print help menu
 
     /* Sending messages */
-    while (exit_status == 0){
+    while (exit_status == 0) {
         saisieString(message, REQUEST_DATA_MAX_LENGTH);
-        if(commande_detection(message, &exit_status,&(*token),sock) == 0){//There is no command
+        if (commande_detection(message, &exit_status,&(*token),sock) == 0){ //There is no command
             write(sock, message, strlen(message));
         }
     }
@@ -177,10 +177,9 @@ int main(int argc, char const *argv[]) {
     } else
         printf("Created\n");
 
-    /* Join TCP connexion manager manager thread */
-    pthread_join( tcp_connect, NULL);
+    /* Join TCP connexion manager thread */
+    pthread_join(tcp_connect, NULL);
 
-    printf("END\n");
     kill_board(msgid);
     sleep(2);
 

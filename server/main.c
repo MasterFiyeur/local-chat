@@ -94,16 +94,16 @@ void* message_receiver(void* args) {
                 }
             }
             if (memory_index == -1) { // No token correspondance found
-                tcpData msg = {7, "You need to log in to send messages!", ""};
+                tcpData msg = {7, "", "You need to log in to send messages!"};
                 send(sock_c, &msg, sizeof(msg), 0);
             } else {
-                tcpData msg = {5, "You have been successfully connected!", ""};
+                tcpData msg = {5, "", "You have been successfully connected!"};
                 send(sock_c, &msg, sizeof(msg), 0);
             }
         } else { //User connected
             if (strcmp(message, "/logout") == 0) { // Logout
                 /* Sending /logout to disconnect client too */
-                tcpData msg = {6, "/logout", ""};
+                tcpData msg = {6, "", "/logout"};
                 send(sock_c, &msg, sizeof(msg), 0);
                 break;
             }

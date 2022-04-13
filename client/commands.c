@@ -136,7 +136,7 @@ int commande_detection(char message[REQUEST_DATA_MAX_LENGTH], int* exit_status, 
         }else if (is_command(message,HELP_COMMAND)){
             printHelp();
         }else{
-            printf("Command not recognized.\n");
+            printf("Command not recognized\n");
         }
         return 1;
     }
