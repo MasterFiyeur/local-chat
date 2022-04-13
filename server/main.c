@@ -44,7 +44,7 @@ void broadcastMessage(char message[REQUEST_DATA_MAX_LENGTH], struct user *shared
     /* Build message adding username */
     // sprintf(broadcast_message,"%s: %s",shared_memory[sender_memory_index].username,message);
 
-    messageSignal broadcast_message;
+    tcpData broadcast_message;
     broadcast_message.type = 1;
     strcpy(broadcast_message.username, shared_memory[sender_memory_index].username);
     strcpy(broadcast_message.message, message);
@@ -52,7 +52,7 @@ void broadcastMessage(char message[REQUEST_DATA_MAX_LENGTH], struct user *shared
     /* Send message to every connected users */
     for (size_t i = 0; i < MAX_USERS_CONNECTED; i++)
     {
-        if(shared_memory[i].sock != 0){
+        if (shared_memory[i].sock != 0) {
             send(shared_memory[i].sock, &broadcast_message, sizeof(broadcast_message),0);
         }
     }
@@ -88,25 +88,26 @@ void* message_receiver(void* args) {
             // Check is the token match to a user
             for (size_t i = 0; i < MAX_USERS_CONNECTED; i++)
             {
-                if(strcmp(message,(*arguments).shared_memory[i].token) == 0){
+                if(strcmp(message,(*arguments).shared_memory[i].token) == 0) {
                     (*arguments).shared_memory[i].sock = sock_c;
                     memory_index = i;
                 }
             }
-            if (memory_index == -1){//No token correspondance found
-                strcpy(message, "You need to log in for send messages !");
-                send(sock_c, message, strlen(message), 0);
+            if (memory_index == -1) { // No token correspondance found
+                tcpData msg = {7, "You need to log in to send messages!", ""};
+                send(sock_c, &msg, sizeof(msg), 0);
             } else {
-                strcpy(message, "You are connected to the chat !");
-                send(sock_c, message, strlen(message), 0);
+                tcpData msg = {5, "You have been successfully connected!", ""};
+                send(sock_c, &msg, sizeof(msg), 0);
             }
         } else { //User connected
-            if (strcmp(message, "/logout") == 0) { // Deconnection
-                /* Sending /logout for disconnect nommed pipe */
-                strcpy(message, "/logout");
-                send(sock_c, message,strlen(message),0);
+            if (strcmp(message, "/logout") == 0) { // Logout
+                /* Sending /logout to disconnect client too */
+                tcpData msg = {6, "/logout", ""};
+                send(sock_c, &msg, sizeof(msg), 0);
                 break;
-            } // Normal message
+            }
+            // Normal message
             printf("Message received (%ld): %s\n", strlen(message), message);
             broadcastMessage(message, (*arguments).shared_memory, memory_index);
         }

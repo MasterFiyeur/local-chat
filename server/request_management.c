@@ -23,7 +23,7 @@ void *login(void* args){
         strcpy((*parent_info).request.data,"Username or password are too long");
         sendto ((*parent_info).sock, (void *) &(*parent_info).request, sizeof(struct request), 0, (struct sockaddr *) &(*parent_info).adr_client, sizeof((*parent_info).adr_client));
         pthread_exit(NULL);
-    }else if (separator_pos == 0 || separator_pos == strlen(data) || separator_pos == strlen(data)-1){
+    } else if (separator_pos == 0 || separator_pos == strlen(data) || separator_pos == strlen(data)-1){
         (*parent_info).request.type = -1; //There is an error
         strcpy((*parent_info).request.data,"Username or password are empty");
         sendto ((*parent_info).sock, (void *) &(*parent_info).request, sizeof(struct request), 0, (struct sockaddr *) &(*parent_info).adr_client, sizeof((*parent_info).adr_client));
