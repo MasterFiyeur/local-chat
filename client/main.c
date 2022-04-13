@@ -12,6 +12,7 @@
 #include "../utils/request.h"
 #include "../utils/signals.h"
 #include "../utils/client-structures.h"
+#include "../utils/colors.h"
 
 #if __APPLE__
     #define OPEN_BOARD "open ./output/board --env MSGID=%i"
@@ -22,7 +23,7 @@
 int msgid;
 
 static void handler(int sig, siginfo_t *info, void *ctx) {
-    printf("Received signal %s (%d)\n", get_signal_name(sig), sig);
+    printf(C_RED "Received signal %s (%d)" C_RESET "\n", get_signal_name(sig), sig);
     // close board and message queue
     kill_board(msgid);
     msgctl(msgid, IPC_RMID, NULL);
@@ -56,7 +57,7 @@ void *receive_msg(void *socket)
         message.message[len] = '\0';
         /* If connection ended */
         if(strcmp(message.message, LOGOUT_COMMAND) == 0){
-            printf("[Message receiver] - Good Bye.\n");
+            printf(C_GRN "You are now logged out" C_RESET "\n");
             //TODO : end connexion to pipe
             break;
         }
@@ -71,18 +72,18 @@ void *receive_msg(void *socket)
                 msgctl(msgid, IPC_RMID, NULL);
                 break;
             case 5: // connected
-                printf("You are now logged in\n");
+                printf(C_GRN "You are now logged in" C_RESET "\n");
                 sendSignal(msgid, 1);
                 break;
             case 6: // disconnected
-                printf("You are now disconnected\n");
+                printf(C_GRN "You are now disconnected" C_RESET "\n");
                 sendSignal(msgid, 2);
                 break;
             case 7: // you need to log in
-                printf("You need to log in first!\n");
+                printf(C_RED "You need to log in first!" C_RESET "\n");
                 break;
             default:
-                printf("Unknwon message from the server: [%ld] %s\n", message.type, message.message);
+                printf(C_RED "Unknwon message from the server: [%ld] %s\n" C_RESET, message.type, message.message);
                 break;
         }
     }
@@ -112,7 +113,7 @@ void *TCP_connexion(void* args){
 
     /* Establish the connection */
     if ((connect( sock ,(struct sockaddr *)&adr_s,sizeof(adr_s))) == -1 ) {
-        printf("Connection to socket failed.\n");
+        perror("Connection to socket failed");
         exit(0);
     }
 
@@ -164,7 +165,7 @@ int main(int argc, char const *argv[]) {
     char command[200];
     sprintf(command, OPEN_BOARD, msgid);
     if (system(command) != 0) {
-        fprintf(stderr, "Unable to open the board console: abort\n");
+        fprintf(stderr, C_RED "Unable to open the board console: abort\n" C_RESET);
         return EXIT_FAILURE;
     }
   
