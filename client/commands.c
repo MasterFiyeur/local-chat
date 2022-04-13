@@ -158,6 +158,10 @@ int commande_detection(char message[REQUEST_DATA_MAX_LENGTH], int* exit_status, 
         bind(sock, (struct sockaddr *) &adr_c, sizeof(adr_c));
 
         if (is_command(message,LOGIN_COMMAND)){
+            if(strcmp(token,"") != 0){
+                printf("You're already logged\n");
+                return 1;
+            }
             if(message[strlen(LOGIN_COMMAND)] == '\0'){
                 printf("Example use : /login MyUser MyPass\n");
             }else{
@@ -170,6 +174,10 @@ int commande_detection(char message[REQUEST_DATA_MAX_LENGTH], int* exit_status, 
         }else if (is_command(message,CREATE_ACCOUNT_COMMAND)){
             createAccount(message,adr_s,sock);
         }else if (is_command(message,DELETE_ACCOUNT_COMMAND)){
+            if(strcmp(token,"") != 0){
+                printf("You must be logged out to delete an account\n");
+                return 1;
+            }
             deleteAccount(message,adr_s,sock);
         }else if (is_command(message,LIST_COMMAND)){
             connectedUsers(adr_s,sock);
