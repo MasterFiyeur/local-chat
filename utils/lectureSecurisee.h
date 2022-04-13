@@ -25,6 +25,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h> 
 #include <netdb.h>
+#include <arpa/inet.h>
+#include <ctype.h> /* pour le isdigit */
 
 /**
 *\fn void viderBuffer()
@@ -46,20 +48,12 @@ void viderBuffer();
 int saisieInt();
 
 /**
-*\fn float saisieFloat()
-*\author Theo Julien <julientheo@eisti.eu>
-*\version 1.1 Manière différente de verifier l'entrée d'un réel
-*\date 2020-10-23
 *\brief Lecture sécurisée d'un réel
 *\return float_ent la valeur saisie correctement par l'utilisateur
 */
 float saisieFloat();
 
 /**
-*\fn int saisieString(char* str_chaine,int int_taille)
-*\author Theo Julien <julientheo@eisti.eu>
-*\version 0.1 initiale
-*\date 2020-11-14
 *\brief Lecture d'une chaine de caractère
 *\param str_chaine Chaine de caractère à entrer
 *\param int_taille Taille de la chaine voulue (Longueur réelle)
@@ -68,10 +62,14 @@ float saisieFloat();
 int saisieString(char* str_chaine,int int_taille);
 
 /**
-*\fn int * creationTab(int *int_taille)
-*\author Theo Julien <julientheo@eisti.eu>
-*\version 0.1 Initiale
-*\date 2020-11-20
+*\brief Create an absolute path that remove /server if the server is launch from server directory
+*
+*\param path file in tcp-chat directory
+*\return char* absolute path with the path param at the end
+ */
+char* getAbsolutePath(char* path);
+
+/**
 *\brief Creation et remplissage d'un tableau
 *\param int_taille Taille du tableau qui sera renvoyée
 *\return Tableau créée et initialisé
@@ -79,10 +77,6 @@ int saisieString(char* str_chaine,int int_taille);
 int * creationTab(int *int_taille);
 
 /**
-*\fn int* initTab(int int_taille)
-*\author Theo Julien <julientheo@eisti.eu>
-*\version 0.1 Initiale
-*\date 2020-11-20
 *\brief Creation d'un tableau rempli de 0
 *\param int_taille Taille du tableau
 *\return Tableau créée et initialisé
@@ -90,11 +84,14 @@ int * creationTab(int *int_taille);
 int* initTab(int int_taille);
 
 /**
-*\fn void clrscr()
-*\author Theo Julien <julientheo@eisti.eu>
-*\version 0.1 initiale
-*\date 2020-11-27
 *\brief Efface le terminal
 *\pre Execution sous linux
 */
 void clrscr();
+
+/**
+*\brief Vérifie si un string est un nombre (ne contient que des chiffres)
+*\param source La chaine de caractères à vérifier
+*\return 1 si la chaine est un nombre, 0 sinon
+*/
+int isNumber(char source[]);

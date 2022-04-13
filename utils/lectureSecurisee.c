@@ -107,9 +107,26 @@ int saisieString(char* str_chaine,int int_taille){
 	/* Demande tant que la chaine n'est pas de la bonne taille */
 	}while(int_tailleReelle > int_taille || int_tailleReelle==1);
 	/* Copie intégrale de la chaine*/
-	strcpy(str_chaine,ligne);
+	strncpy(str_chaine,ligne,int_tailleReelle-1);
+	str_chaine[int_tailleReelle-1] = '\0';
+
 	/* Renvoi de la taille */
 	return(int_tailleReelle);
+}
+
+char* getAbsolutePath(char* path){
+	char cwd[400];
+    char *absolute_path = malloc(512 * sizeof(char));
+    getcwd(cwd, sizeof(cwd));
+    if(strlen(cwd) > 7 && strcmp(&cwd[strlen(cwd)-7],"/server") == 0){
+        strncpy(absolute_path,cwd,strlen(cwd)-7);
+    }else{
+		strcpy(absolute_path,cwd);
+	}
+	absolute_path[strlen(absolute_path)+1] = '\0';
+	absolute_path[strlen(absolute_path)] = '/';
+	strcat(absolute_path,path);
+	return absolute_path;
 }
 
 int * creationTab(int *int_taille){
@@ -164,4 +181,14 @@ void clrscr()
 {	
 	/* Effacage du terminal */
 	system("clear");
+}
+
+int isNumber(char source[])
+{
+    for (int i = 0; source[i]!= '\0'; i++)
+    {
+        if (isdigit(source[i]) == 0)
+              return 0;
+    }
+    return 1;
 }

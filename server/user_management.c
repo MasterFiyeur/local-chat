@@ -11,7 +11,7 @@ char* token_generation(){
     return token;
 }
 
-int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH]){
+int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH], char** token){
     int i = 0;
 
     //User creation
@@ -30,6 +30,7 @@ int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH]
     {
         if (strcmp(shared_memory[i].username, "")==0){
             strcpy(new_user.token,token_generation());
+            strcpy(*token,new_user.token);
             shared_memory[i] = new_user;
             return 0;
         }
@@ -37,10 +38,24 @@ int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH]
     return 2;
 }
 
+int remove_user(struct user *shared_memory, char token[TOKEN_SIZE]){
+    //Check all the shared memory to find which user has this token
+    for (int i = 0; i < MAX_USERS_CONNECTED; i++){
+        if (strcmp(shared_memory[i].token, token)==0){
+            /* Reset access of this user */
+            strcpy(shared_memory[i].token,"");
+            strcpy(shared_memory[i].username,"");
+            shared_memory[i].sock = 0;
+            return 0;
+        }
+    }
+    //User not found
+    return 1;
+}
 
 
 int numberOfLines(char* path) {
-    FILE* file = fopen(path,"r");
+    FILE* file = fopen(getAbsolutePath(path),"r");
     int res = 0;
     int target = 0;
     int line;
@@ -52,7 +67,7 @@ int numberOfLines(char* path) {
     }
     fclose(file);
 
-    return(res);
+    return(1);
 }
 
 
@@ -66,7 +81,7 @@ char** listOfCouples(char* path) {
     }
     
     FILE* file = NULL;
-    file = fopen(path,"r");
+    file = fopen(getAbsolutePath(path),"r");
     if (file!=NULL) {
         for(int i = 0;i < length;i++) {
             fscanf(file,"%s\t%s\n",res[2*i],res[2*i+1]);
@@ -98,7 +113,7 @@ int findNickname(char* nickname, char* password, char* path, int checkPass) {
 void creation(char* nickname,char* password,char* path) {
     if (findNickname(nickname,"",path,0) == -1) {
         FILE* file = NULL;
-        file = fopen(path,"a");
+        file = fopen(getAbsolutePath(path),"a");
         if (file!=NULL) {
             fprintf(file,"%s\t%s\n",nickname,password);
         }
@@ -113,7 +128,7 @@ void delete(char* nickname,char* path){
     int var = findNickname(nickname,"",path,0);
     if (var != -1) {
         FILE* file = NULL;
-        file = fopen(path,"w+");
+        file = fopen(getAbsolutePath(path),"w+");
         for (int i=0;i<length;i++) {
             if (i != var) {
                 fprintf(file,"%s\t%s\n",couples[2*i],couples[2*i+1]);
