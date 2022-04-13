@@ -12,7 +12,7 @@
 #include <string.h>
 #include <time.h>
 #include "../utils/request.h"
-#include "../utils/lectureSecurisee.h"
+#include "../utils/utils.h"
 
 // Number of user that can be connected at the same time
 #define MAX_USERS_CONNECTED 3
