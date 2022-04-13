@@ -175,7 +175,6 @@ void *account_deletion(void* args){
     username[separator_pos]='\0';
     strncpy(password,&data[separator_pos]+1,strlen(data)-separator_pos);
     
-    printf("delete - findNickname(%s,%s,%s,1) = %d\n",username,password,ACCOUNT_FILE,findNickname(username,password,ACCOUNT_FILE,1));
     if(findNickname(username,password,ACCOUNT_FILE,1) != 1){
         (*parent_info).request.type = -1; 
         strcpy((*parent_info).request.data,"Wrong username/password");

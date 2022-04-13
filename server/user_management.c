@@ -97,7 +97,6 @@ int findNickname(char* nickname, char* password, char* path, int checkPass) {
         if (strcmp(couples[2*k],nickname) == 0) {
             if (checkPass == 0) {
                 res = k;
-                free(couples);
             }
             else if (checkPass == 1) {
                 res = (strcmp(couples[2*k+1],password)==0);
@@ -139,7 +138,6 @@ int delete(char* nickname,char* path){
         file = fopen(path,"w+");
         for (int i=0;i<length;i++) {
             if (i != var) {
-                printf("%s\t%s\n",couples[2*i],couples[2*i+1]);
                 fprintf(file,"%s\t%s\n",couples[2*i],couples[2*i+1]);
             }
         }
