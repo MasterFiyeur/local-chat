@@ -1,12 +1,16 @@
+#include "../utils/colors.h"
+
 #include "commands.h"
 
-void printHelp(){
-    printf("%s -> Log in to the server\n",LOGIN_COMMAND);
-    printf("%s -> Log out from the server\n",LOGOUT_COMMAND);
-    printf("%s -> Create an account\n",CREATE_ACCOUNT_COMMAND);
-    printf("%s -> Delete an account\n",DELETE_ACCOUNT_COMMAND);
-    printf("%s -> Get a list of connected users\n",LIST_COMMAND);
-    printf("%s -> Quit the program\n",EXIT_COMMAND);
+void printHelp() {
+    printf(C_YEL);
+    printf("%s -> Log in to the server\n", LOGIN_COMMAND);
+    printf("%s -> Log out from the server\n", LOGOUT_COMMAND);
+    printf("%s -> Create an account\n", CREATE_ACCOUNT_COMMAND);
+    printf("%s -> Delete an account\n", DELETE_ACCOUNT_COMMAND);
+    printf("%s -> Get a list of connected users\n", LIST_COMMAND);
+    printf("%s -> Quit the program\n", EXIT_COMMAND);
+    printf(C_RESET);
 }
 
 int is_command(char* message, char* command){
@@ -28,12 +32,12 @@ void login(char message[REQUEST_DATA_MAX_LENGTH],char* token, struct sockaddr_in
     sendto (udp_socket, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, sizeof(adr_s)); 
 
     /* Receiving token */
-    if (recvfrom (udp_socket, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg)>0){
-        if(request.type == 0){//Send token to tcp server
-            strcpy(token,request.data);
+    if (recvfrom (udp_socket, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg) > 0) {
+        if (request.type == 0) { // Send token to tcp server
+            strcpy(token, request.data);
             write(tcp_socket, request.data, strlen(request.data));
-        }else{// Wrong username/login
-            printf("%s\n",request.data);
+        } else { // Wrong username/login
+            printf(C_RED "%s\n" C_RESET, request.data);
         }
     }
 }
@@ -49,12 +53,12 @@ void logout(char* token, struct sockaddr_in adr_s, int udp_socket, int tcp_socke
     sendto (udp_socket, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, sizeof(adr_s));
 
     /* Receiving confirmation */
-    if (recvfrom (udp_socket, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg)>0){
-        if(request.type == 0){//Send deconnection to tcp server
+    if (recvfrom (udp_socket, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg) > 0) {
+        if (request.type == 0) { //Send deconnection to tcp server
             write(tcp_socket, LOGOUT_COMMAND, strlen(LOGOUT_COMMAND));
             *exit_status = 1;
-        }else{// Wrong token
-            printf("%s\n",request.data);
+        } else {// Wrong token
+            printf(C_RED "%s\n" C_RESET,request.data);
         }
     }
 }
@@ -72,22 +76,24 @@ void connectedUsers(struct sockaddr_in adr_s, int udp_socket){
     sendto (udp_socket, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, sizeof(adr_s));
 
     /* Receiving list */
-    if (recvfrom (udp_socket, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg)>0){
-        if(request.type == 0){//Display connected users
+    if (recvfrom (udp_socket, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg) > 0) {
+        if (request.type == 0 && strlen(request.data) > 0) { // Display connected users
             /* Print users username */
-            printf("User 1 : ");
+            printf(C_YEL "User 1 : ");
             for (size_t i = 0; i < strlen(request.data); i++)
             {
-                if(request.data[i] == '\t'){
+                if (request.data[i] == '\t') {
                     counter++;
-                    printf("\nUser %d : ",counter);
-                }else{
-                    printf("%c",request.data[i]);
+                    printf("\nUser %d: ", counter);
+                } else {
+                    printf("%c", request.data[i]);
                 }
             }
-            printf("\n");
-        }else{// Something went wrong
-            printf("%s\n",request.data);
+            printf(C_RESET "\n");
+        } else if (request.type == 0) {
+            printf("Nobody is connected\n");
+        } else { // Something went wrong
+            printf("%s\n", request.data);
         }
     }
 
@@ -136,7 +142,7 @@ int commande_detection(char message[REQUEST_DATA_MAX_LENGTH], int* exit_status, 
         }else if (is_command(message,HELP_COMMAND)){
             printHelp();
         }else{
-            printf("Command not recognized.\n");
+            printf(C_RED "Command not recognized\n" C_RESET);
         }
         return 1;
     }

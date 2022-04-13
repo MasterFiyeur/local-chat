@@ -7,10 +7,12 @@
 #include <unistd.h>
 
 #include "commands.h"
+#include "client_methods.h"
 #include "../utils/lectureSecurisee.h"
 #include "../utils/request.h"
 #include "../utils/signals.h"
 #include "../utils/client-structures.h"
+#include "../utils/colors.h"
 
 #if __APPLE__
     #define OPEN_BOARD "open ./output/board --env MSGID=%i"
@@ -18,10 +20,13 @@
     #define OPEN_BOARD "export MSGID=%i; gnome-terminal -- \"./output/board\""
 #endif
 
+int msgid;
 
 static void handler(int sig, siginfo_t *info, void *ctx) {
-    printf("Received signal %s (%d) from PID: %d\n", get_signal_name(sig), sig, info->si_pid);
-    // close()
+    printf(C_RED "Received signal %s (%d)" C_RESET "\n", get_signal_name(sig), sig);
+    // close board and message queue
+    kill_board(msgid);
+    msgctl(msgid, IPC_RMID, NULL);
 }
 
 static void handle_signals(int signals[], int count) {
@@ -43,22 +48,46 @@ static void handle_signals(int signals[], int count) {
 void *receive_msg(void *socket)
 {
     int sock = *((int *)socket);
-    char message[REQUEST_DATA_MAX_LENGTH+MAX_USER_USERNAME_LENGTH+2];//Request data length + Max username length + ": "
+    // char message[REQUEST_DATA_MAX_LENGTH+MAX_USER_USERNAME_LENGTH+2];// USERNAME: message
     int len;
     // client thread always ready to receive message
-    while((len = recv(sock,message,REQUEST_DATA_MAX_LENGTH+MAX_USER_USERNAME_LENGTH+2,0)) > 0) {
-        message[len] = '\0';
+    // while((len = recv(sock,message,REQUEST_DATA_MAX_LENGTH+MAX_USER_USERNAME_LENGTH+2,0)) > 0) {
+    tcpData message;
+    while ((len = recv(sock, &message, sizeof(message), 0)) > 0) {
+        message.message[len] = '\0';
         /* If connection ended */
-        if(strcmp(message,LOGOUT_COMMAND) == 0){
-            printf("[Message receiver] - Good Bye.\n");
+        if(strcmp(message.message, LOGOUT_COMMAND) == 0){
+            printf(C_GRN "You are now logged out" C_RESET "\n");
             //TODO : end connexion to pipe
             break;
         }
 
-        /* Send it to nommed pipe */
-        printf("Message from the server : %s\n",message);
+        /* Send it to message queue */
+        switch (message.type) {
+            case 1: // messahe se,y
+                sendMessage(msgid, message.username, message.message);
+                break;
+            case 4: // STOP
+                kill_board(msgid);
+                msgctl(msgid, IPC_RMID, NULL);
+                break;
+            case 5: // connected
+                printf(C_GRN "You are now logged in" C_RESET "\n");
+                sendSignal(msgid, 1);
+                break;
+            case 6: // disconnected
+                printf(C_GRN "You are now disconnected" C_RESET "\n");
+                sendSignal(msgid, 2);
+                break;
+            case 7: // you need to log in
+                printf(C_RED "You need to log in first!" C_RESET "\n");
+                break;
+            default:
+                printf(C_RED "Unknwon message from the server: [%ld] %s\n" C_RESET, message.type, message.message);
+                break;
+        }
     }
-    pthread_exit(NULL);
+    return NULL;
 }
 
 /**
@@ -71,10 +100,10 @@ void *TCP_connexion(void* args){
     char message[REQUEST_DATA_MAX_LENGTH]; //Message wrote by user
     int sock = socket( AF_INET, SOCK_STREAM,0); //Client socket
     struct sockaddr_in adr_s; //Server address
-    int exit_status = 0;//Exit while condition
+    int exit_status = 0; //Exit while condition
     pthread_t receiver; //Thread that will receive messages
     char token[TOKEN_SIZE]; //Connexion token
-    strcpy(token,"");
+    strcpy(token, "");
 
     /* Server address init */
     bzero(&adr_s,sizeof(adr_s));
@@ -82,20 +111,20 @@ void *TCP_connexion(void* args){
     adr_s.sin_family= AF_INET;
     adr_s.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-    /* Make the connexion */
-    if ((connect( sock ,(struct sockaddr *)&adr_s,sizeof(adr_s))) == -1 ){
-        printf("Connection to socket failed.\n");
+    /* Establish the connection */
+    if ((connect( sock ,(struct sockaddr *)&adr_s,sizeof(adr_s))) == -1 ) {
+        perror("Connection to socket failed");
         exit(0);
     }
 
-    //Creating a thread for receive messages from server
+    // create a thread to receive messages from server
     pthread_create(&receiver, NULL, receive_msg, &sock);
-    printHelp();//Print help menu
+    printHelp(); // print help menu
 
     /* Sending messages */
-    while (exit_status == 0){
+    while (exit_status == 0) {
         saisieString(message, REQUEST_DATA_MAX_LENGTH);
-        if(commande_detection(message, &exit_status,&(*token),sock) == 0){//There is no command
+        if (commande_detection(message, &exit_status,&(*token),sock) == 0){ //There is no command
             write(sock, message, strlen(message));
         }
     }
@@ -121,11 +150,6 @@ static int create_msg_pipe() {
     return msgid;
 }
 
-static void kill_board(int msgid) {
-    stopSignal req = { 3, 0 };
-    size_t s = sizeof(req) - sizeof(long);
-    msgsnd(msgid, &req, s, 0);
-}
 
 int main(int argc, char const *argv[]) {
     pthread_t tcp_connect; //TCP connection
@@ -135,55 +159,32 @@ int main(int argc, char const *argv[]) {
     handle_signals(signals, sizeof(signals)/sizeof(signals[0]));
 
     // message pipe test
-    int msgid = create_msg_pipe();    
+    msgid = create_msg_pipe();    
 
     // launch board console in a new terminal
     char command[200];
     sprintf(command, OPEN_BOARD, msgid);
     if (system(command) != 0) {
-        fprintf(stderr, "Unable to open the board console: abort\n");
+        fprintf(stderr, C_RED "Unable to open the board console: abort\n" C_RESET);
         return EXIT_FAILURE;
     }
   
     /* Creation of TCP connexion manager */
-    printf("Creation TCP thread...");
-    if (pthread_create( &tcp_connect, NULL, TCP_connexion, NULL))
-        printf("\nError during thread creation\n");
-    printf("Created\n");
+    printf("Creating TCP thread... ");
+    if (pthread_create( &tcp_connect, NULL, TCP_connexion, NULL)) {
+        perror("\nError during thread creation");
+        kill_board(msgid);
+        msgctl(msgid, IPC_RMID, NULL);
+    } else
+        printf("Created\n");
 
-    // user joined the chat
-    stopSignal req1 = {3, 1};
-    msgsnd(msgid, &req1, sizeof(req1) - sizeof(long), 0);
+    /* Join TCP connexion manager thread */
+    pthread_join(tcp_connect, NULL);
+
+    kill_board(msgid);
     sleep(2);
 
-    // zrunner says hello world
-    messageSignal req2 = {1, "zrunner", "hello world!"};
-    msgsnd(msgid, &req2, sizeof(req2) - sizeof(long), 0);
-    sleep(1);
-    
-    // théo joined the chat
-    moveSignal req3 = {2, "Théo", true};
-    msgsnd(msgid, &req3, sizeof(req3) - sizeof(long), 0);
-    sleep(1);
-
-    // théo says salut
-    messageSignal req4 = {1, "Théo", "Salut !"};
-    msgsnd(msgid, &req4, sizeof(req4) - sizeof(long), 0);
-    sleep(1);
-
-    // user left the chat
-    stopSignal req5 = {3, 2};
-    msgsnd(msgid, &req5, sizeof(req5) - sizeof(long), 0);
-    sleep(1);
-
-    // close board
-    kill_board(msgid);
-    sleep(3);
-
     msgctl(msgid, IPC_RMID, NULL);
-
-    /* Join TCP connexion manager manager thread */
-    pthread_join( tcp_connect, NULL);
 
     return 0;
 }

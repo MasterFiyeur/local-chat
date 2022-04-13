@@ -1,7 +1,36 @@
+#include <signal.h>
+#include <errno.h>
+
 #include "../utils/lectureSecurisee.h"
 #include "../utils/request.h"
+#include "../utils/signals.h"
+#include "../utils/client-structures.h"
 #include "user_management.h"
 #include "request_management.h"
+
+extern int errno;
+static int IS_RUNNING = true;
+int sock_s;
+
+static void handler(int sig, siginfo_t *info, void *ctx) {
+    printf("Received signal %s (%d)\n", get_signal_name(sig), sig);
+    IS_RUNNING = false;
+    sigaction(sig, &noaction, NULL);
+    shutdown(sock_s, SHUT_RD);
+    close(sock_s);
+    sleep(1); // wait for loops or whatever is running to finish
+    kill(0, sig);
+}
+
+static void handle_signals(int signals[], int count) {
+    struct sigaction action;
+    memset(&action, '\0', sizeof(action));
+    action.sa_sigaction = &handler;
+
+    for (int i=0; i<count; i++) {
+        sigaction(signals[i], &action, NULL);
+    }
+}
 
 /**
 *\brief Send a message to every connected users
@@ -10,15 +39,21 @@
 *\param shared_memory Connected users
 *\param sender_memory_index Index in shared_memory of sender users
  */
-void broadcastMessage(char message[REQUEST_DATA_MAX_LENGTH],struct user *shared_memory,int sender_memory_index){
-    char broadcast_message[REQUEST_DATA_MAX_LENGTH+MAX_USER_USERNAME_LENGTH+2];//Request data length + Max username length + ": "
+void broadcastMessage(char message[REQUEST_DATA_MAX_LENGTH], struct user *shared_memory, int sender_memory_index){
+    // char broadcast_message[REQUEST_DATA_MAX_LENGTH+MAX_USER_USERNAME_LENGTH+2];// USERNAME: message
     /* Build message adding username */
-    sprintf(broadcast_message,"%s: %s",shared_memory[sender_memory_index].username,message);
+    // sprintf(broadcast_message,"%s: %s",shared_memory[sender_memory_index].username,message);
+
+    tcpData broadcast_message;
+    broadcast_message.type = 1;
+    strcpy(broadcast_message.username, shared_memory[sender_memory_index].username);
+    strcpy(broadcast_message.message, message);
+
     /* Send message to every connected users */
     for (size_t i = 0; i < MAX_USERS_CONNECTED; i++)
     {
-        if(shared_memory[i].sock != 0){
-            send(shared_memory[i].sock,broadcast_message,strlen(broadcast_message),0);
+        if (shared_memory[i].sock != 0) {
+            send(shared_memory[i].sock, &broadcast_message, sizeof(broadcast_message),0);
         }
     }
 }
@@ -30,47 +65,57 @@ void broadcastMessage(char message[REQUEST_DATA_MAX_LENGTH],struct user *shared_
 *\param args 
 *\return void* Nothing
 */
-void* message_receiver(void* args){
-    struct tcp_informations *arguments = args; //Information from communication thread
-    int sock_c = (*arguments).sock_c; //Client socket
-    char message[REQUEST_DATA_MAX_LENGTH]; //Received message
-    int message_length; //Message length 
-    int memory_index = -1;//Index of the user in shared memory
+void* message_receiver(void* args) {
+    struct tcp_informations *arguments = args; // Information from communication thread
+    int sock_c = (*arguments).sock_c; // Client socket
+    char message[REQUEST_DATA_MAX_LENGTH]; // Received message
+    int message_length; // Message length 
+    int memory_index = -1; // Index of the user in shared memory
 
     /* Wait to receive message */
-    while((message_length = recv(sock_c,message,REQUEST_DATA_MAX_LENGTH,0)) > 0) {
+    while (IS_RUNNING) {
+        message_length = recv(sock_c, message, REQUEST_DATA_MAX_LENGTH, MSG_DONTWAIT);
+        if (message_length < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) { // no message, wait and try again
+            sleep(1);
+            errno = 0;
+            continue;
+        }
+        if (message_length < 1) // sometimes 0 when the pipe breaks
+            break;
         message[message_length] = '\0';
-        if(memory_index == -1){//User not connected
-            //Check is the token match to a user
+
+        if (memory_index == -1) { // User not connected
+            // Check is the token match to a user
             for (size_t i = 0; i < MAX_USERS_CONNECTED; i++)
             {
-                if(strcmp(message,(*arguments).shared_memory[i].token) == 0){
+                if(strcmp(message,(*arguments).shared_memory[i].token) == 0) {
                     (*arguments).shared_memory[i].sock = sock_c;
                     memory_index = i;
                 }
             }
-            if(memory_index == -1){//No token correspondance found
-                strcpy(message, "You need to log in for send messages !");
-                send(sock_c,message,strlen(message),0);
-            }else{
-                strcpy(message, "You are connected to the chat !");
-                send(sock_c,message,strlen(message),0);
+            if (memory_index == -1) { // No token correspondance found
+                tcpData msg = {7, "", "You need to log in to send messages!"};
+                send(sock_c, &msg, sizeof(msg), 0);
+            } else {
+                tcpData msg = {5, "", "You have been successfully connected!"};
+                send(sock_c, &msg, sizeof(msg), 0);
             }
-        }else{//User connected
-            if( strcmp(message,"/logout") == 0 ){ // Deconnection
-                /* Sending /logout for disconnect nommed pipe */
-                strcpy(message, "/logout");
-                send(sock_c,message,strlen(message),0);
+        } else { //User connected
+            if (strcmp(message, "/logout") == 0) { // Logout
+                /* Sending /logout to disconnect client too */
+                tcpData msg = {6, "", "/logout"};
+                send(sock_c, &msg, sizeof(msg), 0);
                 break;
-            }//Normal message
-            printf("Message received (%ld): %s\n",strlen(message),message);
-            broadcastMessage(message,(*arguments).shared_memory,memory_index);
+            }
+            // Normal message
+            printf("Message received (%ld): %s\n", strlen(message), message);
+            broadcastMessage(message, (*arguments).shared_memory, memory_index);
         }
     }
-    printf("[client_thread] - Closing TCP connexion %d\n",memory_index);
+    printf("[client_thread] - Closing TCP connexion %d\n", memory_index);
     /* Close the connection and exit */
     close(sock_c);
-    if(memory_index != -1 && (*arguments).shared_memory[memory_index].sock == sock_c){//Check if always connected then clear the shared_memory
+    if (memory_index != -1 && (*arguments).shared_memory[memory_index].sock == sock_c) { // Check if still connected then clear the shared_memory
         (*arguments).shared_memory[memory_index].sock = 0;
         strcpy((*arguments).shared_memory[memory_index].token,"");
         strcpy((*arguments).shared_memory[memory_index].username,"");
@@ -88,7 +133,7 @@ void *communication(void* args){
     struct user *shared_memory = args;
     struct sockaddr_in adr_s; //Server address
     struct tcp_informations thread_infos;
-    int sock_s = socket( AF_INET , SOCK_STREAM, 0 );//Server socket
+    sock_s = socket( AF_INET , SOCK_STREAM, 0 );//Server socket
     int sock_c = 0; //Client socket
     pthread_t client_thread; //Thread for wait client messages
 
@@ -99,20 +144,22 @@ void *communication(void* args){
     adr_s.sin_addr.s_addr = inet_addr("127.0.0.1");
 
     /* Server init */
-    if( bind( sock_s, (struct sockaddr *)&adr_s, sizeof(adr_s)) == -1 ){
-        printf("[Communication] - Cannot bind server\n");
+    if (bind(sock_s, (struct sockaddr *)&adr_s, sizeof(adr_s)) == -1){
+        perror("[Communication] - Cannot bind server");
         exit(EXIT_FAILURE);
     }
 
-    if( listen( sock_s ,REQUEST_DATA_MAX_LENGTH ) == -1 ){
-        printf("[Communication] - listening failed\n");
+    if (listen(sock_s ,REQUEST_DATA_MAX_LENGTH) == -1){
+        perror("[Communication] - listening failed");
         exit(EXIT_FAILURE);
     }
 
-    while(1){
+    while (IS_RUNNING) {
         /* Waiting a connection */
-        if( (sock_c = accept(sock_s, (struct sockaddr *)NULL,NULL)) < 0 )
-            printf("[Communication] - Accept failed \n");
+        if ((sock_c = accept(sock_s, (struct sockaddr*) NULL, NULL)) < 0 && IS_RUNNING)
+            perror("[Communication] - Accept failed");
+        if (!IS_RUNNING)
+            break;
         
         /* Thread for receive all message from this client */
         //Build object to give data
@@ -120,12 +167,12 @@ void *communication(void* args){
         thread_infos.sock_c = sock_c;
 
         printf("[Communication] - Creation message receiver thread...");
-        if (pthread_create( &client_thread, NULL, message_receiver, &thread_infos)) //Thread creation
-            printf("[Client_thread] - Error during thread creation\n");
-        printf("Created\n");
+        if (pthread_create(&client_thread, NULL, message_receiver, &thread_infos)) // Thread creation
+            perror("[Client_thread] - Error during thread creation");
+        else
+            printf("Created\n");
     }
 
-    close(sock_s);
     /* Properly end the communication thread */
     pthread_exit(NULL);
 }
@@ -161,7 +208,7 @@ void *request_manager(void* args){
     adr_s.sin_addr.s_addr = htonl(INADDR_ANY);
     bind (sock, (struct sockaddr *) &adr_s, sizeof(adr_s)); // Attachement socket
 
-    while (1){
+    while (IS_RUNNING) {
         //Waiting for a new message
         if (recvfrom (sock, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_c, &lg)){
 
@@ -214,6 +261,10 @@ int main(int argc, char const *argv[])
     //Init of random function (used for token generation)
     srand(time(NULL));
 
+    // add signal handler for potentially-killing signals
+    int signals[6] = {SIGSTOP, SIGABRT, SIGINT, SIGQUIT, SIGTERM, SIGTSTP};
+    handle_signals(signals, sizeof(signals)/sizeof(signals[0]));
+
     /* Shared memory of connected users initialization */
     shared_memory = mmap(NULL, MAX_USERS_CONNECTED*sizeof(struct user), (PROT_READ | PROT_WRITE), (MAP_SHARED | MAP_ANONYMOUS), -1, 0); //Shared memory init
     //Init of users array to empty string as username and ip_add
@@ -222,24 +273,26 @@ int main(int argc, char const *argv[])
         strcpy(shared_memory[i].token,"");
         shared_memory[i].sock = 0;
     }
-
-    printf("Hello I'm the server !\n");
     
     /* Communication thread creation */
-    printf("Creation communication thread...");
-    if (pthread_create( &com, NULL, communication, (void*)shared_memory))
+    printf("Creation communication thread... ");
+    if (pthread_create(&com, NULL, communication, (void*)shared_memory)) {
         printf("\nError during thread creation\n");
-    printf("Created\n");
+        exit(EXIT_FAILURE);
+    } else
+        printf("Created\n");
 
     /* Request manager thread creation */
-    printf("Creation request thread...");
-    if (pthread_create( &req, NULL, request_manager, (void*)shared_memory)) //Thread creation
+    printf("Creation request thread... ");
+    if (pthread_create(&req, NULL, request_manager, (void*)shared_memory)) {
         printf("\nError during thread creation\n");
-    printf("Created\n");
+        exit(EXIT_FAILURE);
+    } else
+        printf("Created\n");
 
     /* Join communication and request manager threads */
-    pthread_join( com, NULL);
-    pthread_join( req, NULL);
+    pthread_join(com, NULL);
+    pthread_join(req, NULL);
 
     /* Unmap shared_memory */
     munmap(shared_memory, MAX_USERS_CONNECTED*sizeof(char*));
