@@ -32,9 +32,10 @@ void *login(void* args){
 
     /* Copy username and password from data */
     strncpy(username,data,separator_pos);
+    username[separator_pos]='\0';
     strncpy(password,&data[separator_pos]+1,strlen(data)-separator_pos);
 
-    printf("findNickname(%s,%s,%s,1) = %d\n",username,password,ACCOUNT_FILE,findNickname(username,password,ACCOUNT_FILE,1));
+    printf("login - findNickname(%s,%s,%s,1) = %d\n",username,password,ACCOUNT_FILE,findNickname(username,password,ACCOUNT_FILE,1));
     if(/*findNickname(username,password,ACCOUNT_FILE,1)*/1 != 1){
         (*parent_info).request.type = -1; 
         strcpy((*parent_info).request.data,"Wrong username/password");
@@ -126,6 +127,7 @@ void *account_creation(void* args){
 
     /* Copy username and password from data */
     strncpy(username,data,separator_pos);
+    username[separator_pos]='\0';
     strncpy(password,&data[separator_pos]+1,strlen(data)-separator_pos);
     
     /* Sending response */
@@ -172,8 +174,10 @@ void *account_deletion(void* args){
 
     /* Copy username and password from data */
     strncpy(username,data,separator_pos);
+    username[separator_pos]='\0';
     strncpy(password,&data[separator_pos]+1,strlen(data)-separator_pos);
     
+    printf("delete - findNickname(%s,%s,%s,1) = %d\n",username,password,ACCOUNT_FILE,findNickname(username,password,ACCOUNT_FILE,1));
     if(findNickname(username,password,ACCOUNT_FILE,1) != 1){
         (*parent_info).request.type = -1; 
         strcpy((*parent_info).request.data,"Wrong username/password");
