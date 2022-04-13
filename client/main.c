@@ -8,7 +8,7 @@
 
 #include "commands.h"
 #include "client_methods.h"
-#include "../utils/lectureSecurisee.h"
+#include "../utils/utils.h"
 #include "../utils/request.h"
 #include "../utils/signals.h"
 #include "../utils/client-structures.h"
@@ -113,7 +113,7 @@ void *TCP_connexion(void* args){
 
     /* Establish the connection */
     if ((connect( sock ,(struct sockaddr *)&adr_s,sizeof(adr_s))) == -1 ) {
-        perror("Connection to socket failed");
+        perror("Connection to socket failed\n");
         exit(0);
     }
 

@@ -5,7 +5,7 @@
 #include <signal.h>
 
 #include "../utils/client-structures.h"
-#include "../utils/lectureSecurisee.h"
+#include "../utils/utils.h"
 #include "./threads.h"
 
 int get_msgid() {
