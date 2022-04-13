@@ -76,12 +76,12 @@ char** listOfCouples(char* path) {
     return(res);
 }
 
-int findNickname(char* pseudo, char* password, char* path, int checkPass) { 
+int findNickname(char* nickname, char* password, char* path, int checkPass) { 
     /*checkpass : 0 -> doesn't check the password and returns the position of the nickname | 1 -> check the password and returns 0 if it doesn't fit, 1 if it fits*/
     int length = numberOfLines(path);
     char** couples = listOfCouples(path);
     for(int k=0;k<length;k++) {
-        if (strcmp(couples[2*k],pseudo) == 0) {
+        if (strcmp(couples[2*k],nickname) == 0) {
             if (checkPass == 0) {
                 free(couples);
                 return(k);

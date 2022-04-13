@@ -44,9 +44,49 @@ char *token_generation();
 */
 int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH]);
 
+/**
+*\brief returns the number of lines of the csv
+*
+*\param path Path of the .csv
+*\return int number of lines
+*/
+int numberOfLines(char* path);
 
-int numberOfLines(char* path); /*returns the number of lines of the csv*/
-char** listOfCouples(char* path); /*returns a list having one line per nickname and password of the csv*/
-int findNickname(char* pseudo, char* password, char* path, int checkPass); /*checks if the nickname exists, or if the password matches the nickname*/
-void creation(char* nickname,char* password,char* path); /*adds a line in the csv containing the datas, if the nickname doesn't exist yet*/
-void delete(char* nickname,char* path); /*deletes the line containing the given nickname in the csv*/
+/**
+*\brief gives a list having one line per nickname and password of the csv
+*
+*\param path Path of the .csv
+*\return char** list of useful data
+*/
+char** listOfCouples(char* path); 
+
+/**
+*\brief either finds the given nickname or says if the password matches with the nickname
+*
+*\param nickname username you want to check
+*\param password password you may want to check
+*\param path Path of the .csv
+*\param checkPass indicates weither you want to check the password (1) or check the username (0)
+*\return -1 if the username doesn't exist
+*\return [|0,n|] for the position of the username
+*\return 0 if the password doesnt match
+*\return 1 if the password does match
+*/
+int findNickname(char* nickname, char* password, char* path, int checkPass);
+
+/**
+*\brief writes down the combination nickname password in the .csv
+*
+*\param nickname username you want to check
+*\param password password you may want to check
+*\param path Path of the .csv
+*/
+void creation(char* nickname,char* password,char* path);
+
+/**
+*\brief deletes the combination associated with nickname in the .csv
+*
+*\param nickname username you want to delete
+*\param path Path of the .csv
+*/
+void delete(char* nickname,char* path);
