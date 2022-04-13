@@ -86,7 +86,7 @@ int findNickname(char* pseudo, char* password, char* path, int checkPass) {
                 free(couples);
                 return(k);
             }
-            else {
+            else if (checkPass == 1) {
                 return((strcmp(couples[2*k+1],password)==0));
             }
         }
@@ -102,6 +102,7 @@ void creation(char* nickname,char* password,char* path) {
         if (file!=NULL) {
             fprintf(file,"%s\t%s\n",nickname,password);
         }
+        fclose(file);
     }
     else {printf("The nickname already exists !\n");}
 }
@@ -118,5 +119,6 @@ void delete(char* nickname,char* path){
                 fprintf(file,"%s\t%s\n",couples[2*i],couples[2*i+1]);
             }
         }
+        fclose(file);
     }
 }
