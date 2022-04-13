@@ -55,10 +55,9 @@ int remove_user(struct user *shared_memory, char token[TOKEN_SIZE]){
 
 
 int numberOfLines(char* path) {
-    FILE* file = fopen(getAbsolutePath(path),"r");
+    FILE* file = fopen(path,"r");
     int res = 0;
     int target = 0;
-    int line;
     if (file != NULL) {
         do {
             target = fgetc(file);
@@ -66,7 +65,6 @@ int numberOfLines(char* path) {
         } while (target != EOF);
     }
     fclose(file);
-
     return(1);
 }
 
@@ -81,7 +79,7 @@ char** listOfCouples(char* path) {
     }
     
     FILE* file = NULL;
-    file = fopen(getAbsolutePath(path),"r");
+    file = fopen(path,"r");
     if (file!=NULL) {
         for(int i = 0;i < length;i++) {
             fscanf(file,"%s\t%s\n",res[2*i],res[2*i+1]);
@@ -110,30 +108,40 @@ int findNickname(char* nickname, char* password, char* path, int checkPass) {
     return(-1);
 }
 
-void creation(char* nickname,char* password,char* path) {
-    if (findNickname(nickname,"",path,0) == -1) {
-        FILE* file = NULL;
-        file = fopen(getAbsolutePath(path),"a");
-        if (file!=NULL) {
-            fprintf(file,"%s\t%s\n",nickname,password);
+int creation(char* nickname,char* password,char* path) {
+    if (findNickname(nickname, "", path, 0) == -1)
+    {
+        FILE *file = NULL;
+        file = fopen(path, "a");
+        if (file != NULL)
+        {
+            fprintf(file, "%s\t%s\n", nickname, password);
         }
         fclose(file);
+        return 1;
     }
-    else {printf("The nickname already exists !\n");}
+    else
+    {
+        return 0;
+    }
 }
 
-void delete(char* nickname,char* path){
+int delete(char* nickname,char* path){
     char** couples = listOfCouples(path);
     int length = numberOfLines(path);
     int var = findNickname(nickname,"",path,0);
     if (var != -1) {
         FILE* file = NULL;
-        file = fopen(getAbsolutePath(path),"w+");
+        file = fopen(path,"w+");
         for (int i=0;i<length;i++) {
             if (i != var) {
+                printf("%s\t%s\n",couples[2*i],couples[2*i+1]);
                 fprintf(file,"%s\t%s\n",couples[2*i],couples[2*i+1]);
             }
         }
         fclose(file);
+        return 1;
+    }else{
+        return 0;
     }
 }

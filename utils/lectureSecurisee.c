@@ -116,6 +116,7 @@ int saisieString(char* str_chaine,int int_taille){
 
 char* getAbsolutePath(char* path){
 	char cwd[400];
+	printf("Parsing path\n");
     char *absolute_path = malloc(512 * sizeof(char));
     getcwd(cwd, sizeof(cwd));
     if(strlen(cwd) > 7 && strcmp(&cwd[strlen(cwd)-7],"/server") == 0){
@@ -126,6 +127,7 @@ char* getAbsolutePath(char* path){
 	absolute_path[strlen(absolute_path)+1] = '\0';
 	absolute_path[strlen(absolute_path)] = '/';
 	strcat(absolute_path,path);
+	printf("Path : %s\n",absolute_path);
 	return absolute_path;
 }
 

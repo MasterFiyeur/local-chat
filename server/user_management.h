@@ -90,13 +90,17 @@ int findNickname(char* nickname, char* password, char* path, int checkPass);
 *\param nickname username you want to check
 *\param password password you may want to check
 *\param path Path of the .csv
+*\return 0 if account not created
+*\return 1 if account created
 */
-void creation(char* nickname,char* password,char* path);
+int creation(char* nickname,char* password,char* path);
 
 /**
 *\brief deletes the combination associated with nickname in the .csv
 *
 *\param nickname username you want to delete
 *\param path Path of the .csv
+*\return 0 if account not deleted
+*\return 1 if account deleted
 */
-void delete(char* nickname,char* path);
+int delete(char* nickname,char* path);

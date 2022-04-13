@@ -59,6 +59,48 @@ void logout(char* token, struct sockaddr_in adr_s, int udp_socket, int tcp_socke
     }
 }
 
+void createAccount(char message[REQUEST_DATA_MAX_LENGTH], struct sockaddr_in adr_s, int udp_socket){
+    struct request request;
+    unsigned int lg = sizeof(adr_s);
+    /* Building request */
+    request.type = 2;
+    strcpy(request.data,&message[strlen(CREATE_ACCOUNT_COMMAND)+1]);
+
+    /* Log in request (UDP) */
+    sendto (udp_socket, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, sizeof(adr_s)); 
+
+    /* Receiving token */
+    if (recvfrom (udp_socket, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg)>0){
+        if(request.type == 0){
+            printf("%s\n",request.data);
+        }else{ //Something went wrong
+            printf("Syntax : /create User Password\n");
+            printf("%s\n",request.data);
+        }
+    }
+}
+
+void deleteAccount(char message[REQUEST_DATA_MAX_LENGTH], struct sockaddr_in adr_s, int udp_socket){
+    struct request request;
+    unsigned int lg = sizeof(adr_s);
+    /* Building request */
+    request.type = -2;
+    strcpy(request.data,&message[strlen(DELETE_ACCOUNT_COMMAND)+1]);
+
+    /* Log in request (UDP) */
+    sendto (udp_socket, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, sizeof(adr_s)); 
+
+    /* Receiving token */
+    if (recvfrom (udp_socket, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg)>0){
+        if(request.type == 0){
+            printf("%s\n",request.data);
+        }else{ //Something went wrong
+            printf("Syntax : /delete User Password\n");
+            printf("%s\n",request.data);
+        }
+    }
+}
+
 void connectedUsers(struct sockaddr_in adr_s, int udp_socket){
     struct request request;
     unsigned int lg = sizeof(adr_s);
@@ -123,12 +165,12 @@ int commande_detection(char message[REQUEST_DATA_MAX_LENGTH], int* exit_status, 
                 login(message,&(*token), adr_s, sock, tcp_sock);
             }
         }else if (is_command(message,LOGOUT_COMMAND)){
-                //Necessite TCP_socket to send message
-                logout(token, adr_s, sock, tcp_sock, exit_status);
+            //Necessite TCP_socket to send message
+            logout(token, adr_s, sock, tcp_sock, exit_status);
         }else if (is_command(message,CREATE_ACCOUNT_COMMAND)){
-            printf("Command create account\n");
+            createAccount(message,adr_s,sock);
         }else if (is_command(message,DELETE_ACCOUNT_COMMAND)){
-            printf("Command delete account\n");
+            deleteAccount(message,adr_s,sock);
         }else if (is_command(message,LIST_COMMAND)){
             connectedUsers(adr_s,sock);
         }else if (is_command(message,EXIT_COMMAND)){

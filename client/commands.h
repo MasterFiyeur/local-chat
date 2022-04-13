@@ -59,6 +59,10 @@ void login(char message[REQUEST_DATA_MAX_LENGTH],char* token, struct sockaddr_in
  */
 void logout(char* token, struct sockaddr_in adr_s, int udp_socket, int tcp_socket, int* exit_status);
 
+void createAccount(char message[REQUEST_DATA_MAX_LENGTH], struct sockaddr_in adr_s, int udp_socket);
+
+void deleteAccount(char message[REQUEST_DATA_MAX_LENGTH], struct sockaddr_in adr_s, int udp_socket);
+
 /**
 *\brief Print list of all connected users
 *
