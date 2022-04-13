@@ -11,7 +11,7 @@ char* token_generation(){
     return token;
 }
 
-int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH]){
+int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH], char** token){
     int i = 0;
 
     //User creation
@@ -30,6 +30,7 @@ int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH]
     {
         if (strcmp(shared_memory[i].username, "")==0){
             strcpy(new_user.token,token_generation());
+            strcpy(*token,new_user.token);
             shared_memory[i] = new_user;
             return 0;
         }
@@ -37,6 +38,20 @@ int add_user(struct user *shared_memory, char username[MAX_USER_USERNAME_LENGTH]
     return 2;
 }
 
+int remove_user(struct user *shared_memory, char token[TOKEN_SIZE]){
+    //Check all the shared memory to find which user has this token
+    for (int i = 0; i < MAX_USERS_CONNECTED; i++){
+        if (strcmp(shared_memory[i].token, token)==0){
+            /* Reset access of this user */
+            strcpy(shared_memory[i].token,"");
+            strcpy(shared_memory[i].username,"");
+            shared_memory[i].sock = 0;
+            return 0;
+        }
+    }
+    //User not found
+    return 1;
+}
 
 
 int numberOfLines(char* path) {

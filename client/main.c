@@ -1,8 +1,22 @@
 #include <stdio.h>
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+
+#include <sys/msg.h>
+#include <unistd.h>
+
+#include "commands.h"
 #include "../utils/lectureSecurisee.h"
 #include "../utils/request.h"
 #include "../utils/signals.h"
+#include "../utils/client-structures.h"
+
+#if __APPLE__
+    #define OPEN_BOARD "open ./output/board --env MSGID=%i"
+#else
+    #define OPEN_BOARD "export MSGID=%i; gnome-terminal -- \"./output/board\""
+#endif
 
 
 static void handler(int sig, siginfo_t *info, void *ctx) {
@@ -20,49 +34,156 @@ static void handle_signals(int signals[], int count) {
     }
 }
 
+/**
+*\brief Thread which receive each message from the server and will transfer it to board processus
+*
+*\param socket TCP socket to listen for new messages
+*\return void* Nothing
+*/
+void *receive_msg(void *socket)
+{
+    int sock = *((int *)socket);
+    char message[REQUEST_DATA_MAX_LENGTH+MAX_USER_USERNAME_LENGTH+2];//Request data length + Max username length + ": "
+    int len;
+    // client thread always ready to receive message
+    while((len = recv(sock,message,REQUEST_DATA_MAX_LENGTH+MAX_USER_USERNAME_LENGTH+2,0)) > 0) {
+        message[len] = '\0';
+        /* If connection ended */
+        if(strcmp(message,LOGOUT_COMMAND) == 0){
+            printf("[Message receiver] - Good Bye.\n");
+            //TODO : end connexion to pipe
+            break;
+        }
+
+        /* Send it to nommed pipe */
+        printf("Message from the server : %s\n",message);
+    }
+    pthread_exit(NULL);
+}
+
+/**
+*\brief Creation of TCP socket and interception of each connection to affect a thread to connexion
+*
+*\param args NULL
+*\return void* Nothing
+ */
+void *TCP_connexion(void* args){
+    char message[REQUEST_DATA_MAX_LENGTH]; //Message wrote by user
+    int sock = socket( AF_INET, SOCK_STREAM,0); //Client socket
+    struct sockaddr_in adr_s; //Server address
+    int exit_status = 0;//Exit while condition
+    pthread_t receiver; //Thread that will receive messages
+    char token[TOKEN_SIZE]; //Connexion token
+    strcpy(token,"");
+
+    /* Server address init */
+    bzero(&adr_s,sizeof(adr_s));
+    adr_s.sin_port = htons(TCP_PORT);
+    adr_s.sin_family= AF_INET;
+    adr_s.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    /* Make the connexion */
+    if ((connect( sock ,(struct sockaddr *)&adr_s,sizeof(adr_s))) == -1 ){
+        printf("Connection to socket failed.\n");
+        exit(0);
+    }
+
+    //Creating a thread for receive messages from server
+    pthread_create(&receiver, NULL, receive_msg, &sock);
+    printHelp();//Print help menu
+
+    /* Sending messages */
+    while (exit_status == 0){
+        saisieString(message, REQUEST_DATA_MAX_LENGTH);
+        if(commande_detection(message, &exit_status,&(*token),sock) == 0){//There is no command
+            write(sock, message, strlen(message));
+        }
+    }
+
+    /* Properly end the client */
+    close(sock);
+    printf("[TCP-connexion] - Connection ended !\n");
+    pthread_exit(NULL);
+}
+
+static int create_msg_pipe() {
+    key_t cle = ftok("./output/board", 0);
+    if (cle == -1) {
+        perror("Unable to create file key");
+        exit(EXIT_FAILURE);
+    }
+    int msgid = msgget(cle, IPC_CREAT|IPC_EXCL|0640);
+    if (msgid == -1) {
+        perror("Unable to create message pipe:");
+        msgctl(msgid, IPC_RMID, NULL);
+        exit(EXIT_FAILURE);
+    }
+    return msgid;
+}
+
+static void kill_board(int msgid) {
+    stopSignal req = { 3, 0 };
+    size_t s = sizeof(req) - sizeof(long);
+    msgsnd(msgid, &req, s, 0);
+}
 
 int main(int argc, char const *argv[]) {
+    pthread_t tcp_connect; //TCP connection
+    
     // add signal handler for potentially-killing signals
     int signals[6] = {SIGSTOP, SIGABRT, SIGINT, SIGQUIT, SIGTERM, SIGTSTP};
     handle_signals(signals, sizeof(signals)/sizeof(signals[0]));
-    printf("Hello I'm the client with pid %d !\n", getpid());
 
-    /* ---UDP connection--- */
-    struct request request;
-    struct sockaddr_in adr_s, adr_c;
-    unsigned int sock, lg;
-    /* Request creation */
-    request.type = 0;
-    strcpy(request.data,"MySuper/Password");
+    // message pipe test
+    int msgid = create_msg_pipe();    
 
-    sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); // Creation socket
-    /* Client adress init */
-    bzero(&adr_c,sizeof(adr_c));
-    adr_c.sin_family = AF_INET; 
-    adr_c.sin_port = htons(UDP_PORT);
-    adr_c.sin_addr.s_addr = htonl(INADDR_ANY);
-    /* Server adress init */
-    bzero(&adr_s,sizeof(adr_s));
-    adr_s.sin_family = AF_INET;
-    adr_s.sin_port = htons(UDP_PORT);
-    adr_s.sin_addr.s_addr = htonl(INADDR_ANY);
-    /* Attachement socket */
-    if (bind(sock, (struct sockaddr *) &adr_c, sizeof(adr_c)) == -1) {
-        printf("Unable to bind to server\n");
+    // launch board console in a new terminal
+    char command[200];
+    sprintf(command, OPEN_BOARD, msgid);
+    if (system(command) != 0) {
+        fprintf(stderr, "Unable to open the board console: abort\n");
         return EXIT_FAILURE;
     }
-    /* Sending informations */
-    sendto (sock, (void *) &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, sizeof(adr_s)); 
-    lg = sizeof(adr_s);
+  
+    /* Creation of TCP connexion manager */
+    printf("Creation TCP thread...");
+    if (pthread_create( &tcp_connect, NULL, TCP_connexion, NULL))
+        printf("\nError during thread creation\n");
+    printf("Created\n");
 
-    struct request response;
-    ssize_t status = recvfrom(sock, &response, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg);
-    if (status == -1){
-        printf("Unable to receive message\n");
-        return EXIT_FAILURE;
-    }
-    //Close socket
-    close(sock);
+    // user joined the chat
+    stopSignal req1 = {3, 1};
+    msgsnd(msgid, &req1, sizeof(req1) - sizeof(long), 0);
+    sleep(2);
+
+    // zrunner says hello world
+    messageSignal req2 = {1, "zrunner", "hello world!"};
+    msgsnd(msgid, &req2, sizeof(req2) - sizeof(long), 0);
+    sleep(1);
+    
+    // théo joined the chat
+    moveSignal req3 = {2, "Théo", true};
+    msgsnd(msgid, &req3, sizeof(req3) - sizeof(long), 0);
+    sleep(1);
+
+    // théo says salut
+    messageSignal req4 = {1, "Théo", "Salut !"};
+    msgsnd(msgid, &req4, sizeof(req4) - sizeof(long), 0);
+    sleep(1);
+
+    // user left the chat
+    stopSignal req5 = {3, 2};
+    msgsnd(msgid, &req5, sizeof(req5) - sizeof(long), 0);
+    sleep(1);
+
+    // close board
+    kill_board(msgid);
+    sleep(3);
+
+    msgctl(msgid, IPC_RMID, NULL);
+
+    /* Join TCP connexion manager manager thread */
+    pthread_join( tcp_connect, NULL);
 
     return 0;
 }

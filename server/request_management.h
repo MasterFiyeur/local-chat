@@ -2,6 +2,7 @@
 
 #include "../utils/request.h"
 #include "../utils/lectureSecurisee.h"
+#include "user_management.h"
 
 struct request_processing{
     struct request request;
@@ -10,8 +11,16 @@ struct request_processing{
     struct user *shared_memory;
 };
 
+struct tcp_informations{
+    int sock_c;
+    struct user *shared_memory;
+};
+
 /**
 *\brief Log in an user and put it in the shared memory for make it connected
+*
+* Exemple request data : MyUser/Password
+* There is need to have the character of separation (USER_PASSWORD_REQUEST_SEPARATOR) and username/password length less than max constants
 *
 *\param args [struct request_processing] all infomations that a thread needs to respond to a request
 *\return void* Nothing
