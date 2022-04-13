@@ -43,20 +43,22 @@ static void handle_signals(int signals[], int count) {
 void *receive_msg(void *socket)
 {
     int sock = *((int *)socket);
-    char message[REQUEST_DATA_MAX_LENGTH+MAX_USER_USERNAME_LENGTH+2];//Request data length + Max username length + ": "
+    // char message[REQUEST_DATA_MAX_LENGTH+MAX_USER_USERNAME_LENGTH+2];// USERNAME: message
     int len;
     // client thread always ready to receive message
-    while((len = recv(sock,message,REQUEST_DATA_MAX_LENGTH+MAX_USER_USERNAME_LENGTH+2,0)) > 0) {
-        message[len] = '\0';
+    // while((len = recv(sock,message,REQUEST_DATA_MAX_LENGTH+MAX_USER_USERNAME_LENGTH+2,0)) > 0) {
+    messageSignal message;
+    while ((len = recv(sock, &message, sizeof(message), 0)) > 0) {
+        message.message[len] = '\0';
         /* If connection ended */
-        if(strcmp(message,LOGOUT_COMMAND) == 0){
+        if(strcmp(message.message, LOGOUT_COMMAND) == 0){
             printf("[Message receiver] - Good Bye.\n");
             //TODO : end connexion to pipe
             break;
         }
 
-        /* Send it to nommed pipe */
-        printf("Message from the server : %s\n",message);
+        /* Send it to message queue */
+        printf("Message from the server: %s\n", message.message);
     }
     pthread_exit(NULL);
 }
@@ -146,44 +148,49 @@ int main(int argc, char const *argv[]) {
     }
   
     /* Creation of TCP connexion manager */
-    printf("Creation TCP thread...");
-    if (pthread_create( &tcp_connect, NULL, TCP_connexion, NULL))
-        printf("\nError during thread creation\n");
-    printf("Created\n");
+    printf("Creating TCP thread... ");
+    if (pthread_create( &tcp_connect, NULL, TCP_connexion, NULL)) {
+        perror("\nError during thread creation");
+        kill_board(msgid);
+        msgctl(msgid, IPC_RMID, NULL);
+    } else
+        printf("Created\n");
 
-    // user joined the chat
-    stopSignal req1 = {3, 1};
-    msgsnd(msgid, &req1, sizeof(req1) - sizeof(long), 0);
-    sleep(2);
+    // // user joined the chat
+    // stopSignal req1 = {3, 1};
+    // msgsnd(msgid, &req1, sizeof(req1) - sizeof(long), 0);
+    // sleep(2);
 
-    // zrunner says hello world
-    messageSignal req2 = {1, "zrunner", "hello world!"};
-    msgsnd(msgid, &req2, sizeof(req2) - sizeof(long), 0);
-    sleep(1);
+    // // zrunner says hello world
+    // messageSignal req2 = {1, "zrunner", "hello world!"};
+    // msgsnd(msgid, &req2, sizeof(req2) - sizeof(long), 0);
+    // sleep(1);
     
-    // théo joined the chat
-    moveSignal req3 = {2, "Théo", true};
-    msgsnd(msgid, &req3, sizeof(req3) - sizeof(long), 0);
-    sleep(1);
+    // // théo joined the chat
+    // moveSignal req3 = {2, "Théo", true};
+    // msgsnd(msgid, &req3, sizeof(req3) - sizeof(long), 0);
+    // sleep(1);
 
-    // théo says salut
-    messageSignal req4 = {1, "Théo", "Salut !"};
-    msgsnd(msgid, &req4, sizeof(req4) - sizeof(long), 0);
-    sleep(1);
+    // // théo says salut
+    // messageSignal req4 = {1, "Théo", "Salut !"};
+    // msgsnd(msgid, &req4, sizeof(req4) - sizeof(long), 0);
+    // sleep(1);
 
-    // user left the chat
-    stopSignal req5 = {3, 2};
-    msgsnd(msgid, &req5, sizeof(req5) - sizeof(long), 0);
-    sleep(1);
+    // // user left the chat
+    // stopSignal req5 = {3, 2};
+    // msgsnd(msgid, &req5, sizeof(req5) - sizeof(long), 0);
+    // sleep(1);
 
     // close board
+
+    /* Join TCP connexion manager manager thread */
+    pthread_join( tcp_connect, NULL);
+
+    printf("END\n");
     kill_board(msgid);
     sleep(3);
 
     msgctl(msgid, IPC_RMID, NULL);
-
-    /* Join TCP connexion manager manager thread */
-    pthread_join( tcp_connect, NULL);
 
     return 0;
 }

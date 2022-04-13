@@ -2,6 +2,8 @@
 #include <string.h>
 #include <signal.h>
 
+struct sigaction noaction;
+
 char* get_signal_name(int signal) {
     switch (signal) {
         case 2:
