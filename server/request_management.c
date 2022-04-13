@@ -228,7 +228,7 @@ void *connected_users(void* args){
     /* Send response */
     if (bool_empty_list){ //Empty list
         (*parent_info).request.type = 0; 
-        strcpy((*parent_info).request.data,"Nobody is connected");
+        strcpy((*parent_info).request.data,"");
         sendto ((*parent_info).sock, (void *) &(*parent_info).request, sizeof(struct request), 0, (struct sockaddr *) &(*parent_info).adr_client, sizeof((*parent_info).adr_client)); 
     }else{
         (*parent_info).request.type = 0; 
