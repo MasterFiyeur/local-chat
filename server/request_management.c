@@ -34,7 +34,13 @@ void *login(void* args){
     strncpy(username,data,separator_pos);
     strncpy(password,&data[separator_pos]+1,strlen(data)-separator_pos);
 
-    //TODO : Check username/password in file
+    printf("Comparaison : %d\n",findNickname(username,password,ACCOUNT_FILE,1));
+    if(findNickname(username,password,ACCOUNT_FILE,1) != 1){
+        (*parent_info).request.type = -1; 
+        strcpy((*parent_info).request.data,"Wrong username/password");
+        sendto ((*parent_info).sock, (void *) &(*parent_info).request, sizeof(struct request), 0, (struct sockaddr *) &(*parent_info).adr_client, sizeof((*parent_info).adr_client)); 
+        pthread_exit(NULL);
+    }
 
     /* Adding user to the shared memory */
     switch (add_user((*parent_info).shared_memory,username,&token)){

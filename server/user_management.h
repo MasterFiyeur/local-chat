@@ -6,14 +6,18 @@
 #pragma once
 
 #include <sys/mman.h>
+#include <unistd.h> //cwd for get path to users.csv
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include "../utils/request.h"
+#include "../utils/lectureSecurisee.h"
 
 // Number of user that can be connected at the same time
 #define MAX_USERS_CONNECTED 3
+//File of account's username/password
+#define ACCOUNT_FILE "users.csv"
 
 struct user{
     char username[MAX_USER_USERNAME_LENGTH]; //Username of the user

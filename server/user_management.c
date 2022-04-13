@@ -55,7 +55,7 @@ int remove_user(struct user *shared_memory, char token[TOKEN_SIZE]){
 
 
 int numberOfLines(char* path) {
-    FILE* file = fopen(path,"r");
+    FILE* file = fopen(getAbsolutePath(path),"r");
     int res = 0;
     int target = 0;
     int line;
@@ -67,7 +67,7 @@ int numberOfLines(char* path) {
     }
     fclose(file);
 
-    return(res);
+    return(1);
 }
 
 
@@ -81,7 +81,7 @@ char** listOfCouples(char* path) {
     }
     
     FILE* file = NULL;
-    file = fopen(path,"r");
+    file = fopen(getAbsolutePath(path),"r");
     if (file!=NULL) {
         for(int i = 0;i < length;i++) {
             fscanf(file,"%s\t%s\n",res[2*i],res[2*i+1]);
@@ -113,10 +113,11 @@ int findNickname(char* pseudo, char* password, char* path, int checkPass) {
 void creation(char* nickname,char* password,char* path) {
     if (findNickname(nickname,"",path,0) == -1) {
         FILE* file = NULL;
-        file = fopen(path,"a");
+        file = fopen(getAbsolutePath(path),"a");
         if (file!=NULL) {
             fprintf(file,"%s\t%s\n",nickname,password);
         }
+        fclose(file);
     }
     else {printf("The nickname already exists !\n");}
 }
@@ -127,11 +128,12 @@ void delete(char* nickname,char* path){
     int var = findNickname(nickname,"",path,0);
     if (var != -1) {
         FILE* file = NULL;
-        file = fopen(path,"w+");
+        file = fopen(getAbsolutePath(path),"w+");
         for (int i=0;i<length;i++) {
             if (i != var) {
                 fprintf(file,"%s\t%s\n",couples[2*i],couples[2*i+1]);
             }
         }
+        fclose(file);
     }
 }
