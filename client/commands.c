@@ -57,8 +57,8 @@ void logout(char* token, struct sockaddr_in adr_s, int udp_socket, int tcp_socke
         if (request.type == 0) { //Send deconnection to tcp server
             write(tcp_socket, LOGOUT_COMMAND, strlen(LOGOUT_COMMAND));
             *exit_status = 1;
-        } else {// Wrong token
-            printf(C_RED "%s\n" C_RESET,request.data);
+        } else { // Wrong token
+            printf(C_RED "%s\n" C_RESET, request.data);
         }
     }
 }
@@ -78,7 +78,7 @@ void createAccount(char message[REQUEST_DATA_MAX_LENGTH], struct sockaddr_in adr
         if (request.type == 0) {
             printf(C_GRN "%s" C_RESET "\n",request.data);
         } else { // Something went wrong
-            printf(C_RED "Syntax : /create User Password\n");
+            printf(C_RED "Syntax: /create User Password\n");
             printf("%s" C_RESET "\n",request.data);
         }
     }
@@ -99,8 +99,8 @@ void deleteAccount(char message[REQUEST_DATA_MAX_LENGTH], struct sockaddr_in adr
         if(request.type == 0){
             printf("%s\n",request.data);
         }else{ //Something went wrong
-            printf("Syntax : /delete User Password\n");
-            printf("%s\n",request.data);
+            printf(C_RED "Syntax: /delete User Password\n");
+            printf("%s\n" C_RESET, request.data);
         }
     }
 }
@@ -121,7 +121,7 @@ void connectedUsers(struct sockaddr_in adr_s, int udp_socket){
     if (recvfrom (udp_socket, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg) > 0) {
         if (request.type == 0 && strlen(request.data) > 0) { // Display connected users
             /* Print users username */
-            printf(C_YEL "User 1 : ");
+            printf(C_YEL "User 1: ");
             for (size_t i = 0; i < strlen(request.data); i++)
             {
                 if (request.data[i] == '\t') {
@@ -135,7 +135,7 @@ void connectedUsers(struct sockaddr_in adr_s, int udp_socket){
         } else if (request.type == 0) {
             printf("Nobody is connected\n");
         } else { // Something went wrong
-            printf("%s\n", request.data);
+            printf(C_RED "%s\n" C_RESET, request.data);
         }
     }
 
@@ -146,7 +146,7 @@ int commande_detection(char message[REQUEST_DATA_MAX_LENGTH], int* exit_status, 
     struct sockaddr_in adr_s, adr_c; //server and client addresses
     unsigned int sock; //Socket
 
-    if(strlen(message) > 0 && message[0] == '/'){
+    if (strlen(message) > 0 && message[0] == '/') {
         /* Addresses init */
         //Client init
         bzero(&adr_c,sizeof(adr_c));
@@ -163,35 +163,35 @@ int commande_detection(char message[REQUEST_DATA_MAX_LENGTH], int* exit_status, 
         sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
         bind(sock, (struct sockaddr *) &adr_c, sizeof(adr_c));
 
-        if (is_command(message,LOGIN_COMMAND)){
-            if(strcmp(token,"") != 0){
-                printf("You're already logged\n");
+        if (is_command(message,LOGIN_COMMAND)) {
+            if (strcmp(token,"") != 0) {
+                printf(C_RED "You are already logged in" C_RESET "\n");
                 return 1;
             }
-            if(message[strlen(LOGIN_COMMAND)] == '\0'){
-                printf("Example use : /login MyUser MyPass\n");
-            }else{
+            if (message[strlen(LOGIN_COMMAND)] == '\0') {
+                printf(C_RED "Syntax: /login MyUser MyPass" C_RESET "\n");
+            } else {
                 //Necessite TCP_socket to send message
                 login(message,&(*token), adr_s, sock, tcp_sock);
             }
-        }else if (is_command(message,LOGOUT_COMMAND)){
+        } else if (is_command(message,LOGOUT_COMMAND)) {
             //Necessite TCP_socket to send message
             logout(token, adr_s, sock, tcp_sock, exit_status);
-        }else if (is_command(message,CREATE_ACCOUNT_COMMAND)){
+        } else if (is_command(message,CREATE_ACCOUNT_COMMAND)) {
             createAccount(message,adr_s,sock);
-        }else if (is_command(message,DELETE_ACCOUNT_COMMAND)){
-            if(strcmp(token,"") != 0){
-                printf("You must be logged out to delete an account\n");
+        } else if (is_command(message,DELETE_ACCOUNT_COMMAND)) {
+            if (strcmp(token, "") != 0) {
+                printf(C_RED "You must be logged out to delete an account" C_RESET "\n");
                 return 1;
             }
             deleteAccount(message,adr_s,sock);
-        }else if (is_command(message,LIST_COMMAND)){
+        } else if (is_command(message,LIST_COMMAND)) {
             connectedUsers(adr_s,sock);
-        }else if (is_command(message,EXIT_COMMAND)){
+        } else if (is_command(message,EXIT_COMMAND)) {
             *exit_status = 1;
-        }else if (is_command(message,HELP_COMMAND)){
+        } else if (is_command(message,HELP_COMMAND)) {
             printHelp();
-        }else{
+        } else {
             printf(C_RED "Command not recognized\n" C_RESET);
         }
         return 1;
