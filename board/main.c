@@ -34,6 +34,7 @@ int get_msgid() {
 int main(int argc, char const *argv[])
 {
     int msgid = get_msgid();
+    printf("msgid=%d\n", msgid);
     pthread_t thread1, thread2, thread3;
     int status;
     

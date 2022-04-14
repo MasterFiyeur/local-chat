@@ -136,12 +136,12 @@ void *TCP_connexion(void* args){
 }
 
 static int create_msg_pipe() {
-    key_t cle = ftok("./output/board", 0);
-    if (cle == -1) {
-        perror("Unable to create file key");
-        exit(EXIT_FAILURE);
-    }
-    int msgid = msgget(cle, IPC_CREAT|IPC_EXCL|0640);
+    // key_t cle = ftok("./output/board", 0);
+    // if (cle == -1) {
+    //     perror("Unable to create file key");
+    //     exit(EXIT_FAILURE);
+    // }
+    int msgid = msgget(IPC_PRIVATE, IPC_CREAT|IPC_EXCL|0640);
     if (msgid == -1) {
         perror("Unable to create message pipe:");
         msgctl(msgid, IPC_RMID, NULL);
@@ -159,7 +159,8 @@ int main(int argc, char const *argv[]) {
     handle_signals(signals, sizeof(signals)/sizeof(signals[0]));
 
     // message pipe test
-    msgid = create_msg_pipe();    
+    msgid = create_msg_pipe();   
+    printf("msgid=%d\n", msgid); 
 
     // launch board console in a new terminal
     char command[200];
