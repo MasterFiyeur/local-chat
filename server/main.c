@@ -11,6 +11,7 @@
 extern int errno;
 static int IS_RUNNING = true;
 int sock_s;
+struct user *shared_memory; //Shared memory variable (connected users)
 
 static void handler(int sig, siginfo_t *info, void *ctx) {
     printf("Received signal %s (%d)\n", get_signal_name(sig), sig);
@@ -18,7 +19,10 @@ static void handler(int sig, siginfo_t *info, void *ctx) {
     sigaction(sig, &noaction, NULL);
     shutdown(sock_s, SHUT_RD);
     close(sock_s);
-    sleep(1); // wait for loops or whatever is running to finish
+    /* Wait for loops or whatever is running to finish */
+    sleep(1);
+    /* Unmap shared_memory */
+    munmap(shared_memory, MAX_USERS_CONNECTED*sizeof(char*));
     kill(0, sig);
 }
 
@@ -256,7 +260,6 @@ void *request_manager(void* args){
 int main(int argc, char const *argv[])
 {
     pthread_t com, req; //communication process and request manager process
-    struct user *shared_memory; //Shared memory variable (connected users)
     
     //Init of random function (used for token generation)
     srand(time(NULL));
