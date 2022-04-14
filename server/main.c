@@ -289,6 +289,8 @@ int main(int argc, char const *argv[])
         exit(EXIT_FAILURE);
     } else
         printf("Created\n");
+    
+    printf("Server is ready to serve!\n");
 
     /* Join communication and request manager threads */
     pthread_join(com, NULL);
