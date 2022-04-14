@@ -2,6 +2,9 @@
 output/*
 !output/.gitkeep
 
+# Data
+users.txt
+
 # IDE
 .vscode
 .DS_Store
