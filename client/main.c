@@ -21,12 +21,15 @@
 #endif
 
 int msgid;
+int tcp_socket;
 
 static void handler(int sig, siginfo_t *info, void *ctx) {
     printf(C_RED "Received signal %s (%d)" C_RESET "\n", get_signal_name(sig), sig);
     // close board and message queue
     kill_board(msgid);
     msgctl(msgid, IPC_RMID, NULL);
+    close(tcp_socket);
+    exit(-1);
 }
 
 static void handle_signals(int signals[], int count) {
@@ -45,13 +48,12 @@ static void handle_signals(int signals[], int count) {
 *\param socket TCP socket to listen for new messages
 *\return void* Nothing
 */
-void *receive_msg(void *socket)
+void *receive_msg()
 {
-    int sock = *((int *)socket);
     int len;
     // client thread always ready to receive message
     tcpData message;
-    while ((len = recv(sock, &message, sizeof(message), 0)) > 0) {
+    while ((len = recv(tcp_socket, &message, sizeof(message), 0)) > 0) {
         message.message[len] = '\0';
         /* If connection ended */
         if(strcmp(message.message, LOGOUT_COMMAND) == 0){
@@ -96,7 +98,7 @@ void *receive_msg(void *socket)
  */
 void *TCP_connexion(void* args){
     char message[REQUEST_DATA_MAX_LENGTH]; //Message wrote by user
-    int sock = socket( AF_INET, SOCK_STREAM,0); //Client socket
+    tcp_socket = socket( AF_INET, SOCK_STREAM,0); //Client socket
     struct sockaddr_in adr_s; //Server address
     int exit_status = 0; //Exit while condition
     pthread_t receiver; //Thread that will receive messages
@@ -110,35 +112,31 @@ void *TCP_connexion(void* args){
     adr_s.sin_addr.s_addr = inet_addr("127.0.0.1");
 
     /* Establish the connection */
-    if ((connect( sock ,(struct sockaddr *)&adr_s,sizeof(adr_s))) == -1 ) {
-        perror("Connection to socket failed\n");
-        exit(0);
+    if ((connect(tcp_socket ,(struct sockaddr *)&adr_s,sizeof(adr_s))) == -1 ) {
+        perror("Connection to socket failed");
+        kill(0, SIGINT);
+        pthread_exit(NULL);
     }
 
     // create a thread to receive messages from server
-    pthread_create(&receiver, NULL, receive_msg, &sock);
+    pthread_create(&receiver, NULL, receive_msg, NULL);
     printHelp(); // print help menu
 
     /* Sending messages */
     while (exit_status == 0) {
         saisieString(message, REQUEST_DATA_MAX_LENGTH);
-        if (commande_detection(message, &exit_status,&(*token),sock) == 0){ //There is no command
-            write(sock, message, strlen(message));
+        if (commande_detection(message, &exit_status, &(*token), tcp_socket) == 0){ //There is no command
+            write(tcp_socket, message, strlen(message));
         }
     }
 
     /* Properly end the client */
-    close(sock);
+    close(tcp_socket);
     printf("[TCP-connexion] - Connection ended !\n");
     pthread_exit(NULL);
 }
 
 static int create_msg_pipe() {
-    // key_t cle = ftok("./output/board", 0);
-    // if (cle == -1) {
-    //     perror("Unable to create file key");
-    //     exit(EXIT_FAILURE);
-    // }
     int msgid = msgget(IPC_PRIVATE, IPC_CREAT|IPC_EXCL|0640);
     if (msgid == -1) {
         perror("Unable to create message pipe:");
@@ -150,7 +148,7 @@ static int create_msg_pipe() {
 
 
 int main(int argc, char const *argv[]) {
-    pthread_t tcp_connect; //TCP connection
+    pthread_t tcp_connect; // TCP connection
     
     // add signal handler for potentially-killing signals
     int signals[6] = {SIGSTOP, SIGABRT, SIGINT, SIGQUIT, SIGTERM, SIGTSTP};
