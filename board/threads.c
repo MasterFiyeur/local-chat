@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <sys/msg.h>
 
+#include "../utils/colors.h"
+
 void* collectMessages(void* arg) {
     int msgid = (size_t) arg;
     messageSignal req;
@@ -14,7 +16,7 @@ void* collectMessages(void* arg) {
             perror("P1: Error receiving request");
             return NULL;
         }
-        printf("%s: %s\n", req.username, req.message);
+        printf(C_CYN "%s:" C_RESET " %s\n", req.username, req.message);
     }
     pthread_exit(0);
 }
