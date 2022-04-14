@@ -55,7 +55,12 @@ int remove_user(struct user *shared_memory, char token[TOKEN_SIZE]){
 
 
 int numberOfLines(char* path) {
-    FILE* file = fopen(path,"r");
+    FILE* file;
+    if( !(access(path, F_OK) == 0) ){
+        file = fopen(path,"w");
+        fclose(file);
+    }
+    file = fopen(path,"r");
     int res = 0;
     int target = 0;
     if (file != NULL) {
