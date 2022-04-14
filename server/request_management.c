@@ -130,7 +130,7 @@ void *account_creation(void* args){
     
     /* Sending response */
     if(creation(username,password,ACCOUNT_FILE) != 1){
-        (*parent_info).request.type = 0; 
+        (*parent_info).request.type = -1; 
         strcpy((*parent_info).request.data,"Username already exists");
         sendto ((*parent_info).sock, (void *) &(*parent_info).request, sizeof(struct request), 0, (struct sockaddr *) &(*parent_info).adr_client, sizeof((*parent_info).adr_client)); 
     }else{
@@ -182,7 +182,7 @@ void *account_deletion(void* args){
     }else{
         /* Sending response */
         if(delete(username,ACCOUNT_FILE) != 1){
-            (*parent_info).request.type = 0; 
+            (*parent_info).request.type = -1; 
             strcpy((*parent_info).request.data,"Something went wrong");
             sendto ((*parent_info).sock, (void *) &(*parent_info).request, sizeof(struct request), 0, (struct sockaddr *) &(*parent_info).adr_client, sizeof((*parent_info).adr_client)); 
         }else{

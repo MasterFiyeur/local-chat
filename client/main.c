@@ -48,10 +48,8 @@ static void handle_signals(int signals[], int count) {
 void *receive_msg(void *socket)
 {
     int sock = *((int *)socket);
-    // char message[REQUEST_DATA_MAX_LENGTH+MAX_USER_USERNAME_LENGTH+2];// USERNAME: message
     int len;
     // client thread always ready to receive message
-    // while((len = recv(sock,message,REQUEST_DATA_MAX_LENGTH+MAX_USER_USERNAME_LENGTH+2,0)) > 0) {
     tcpData message;
     while ((len = recv(sock, &message, sizeof(message), 0)) > 0) {
         message.message[len] = '\0';
@@ -160,7 +158,6 @@ int main(int argc, char const *argv[]) {
 
     // message pipe test
     msgid = create_msg_pipe();   
-    printf("msgid=%d\n", msgid); 
 
     // launch board console in a new terminal
     char command[200];

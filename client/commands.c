@@ -75,11 +75,11 @@ void createAccount(char message[REQUEST_DATA_MAX_LENGTH], struct sockaddr_in adr
 
     /* Receiving token */
     if (recvfrom (udp_socket, &request, sizeof(struct request), 0, (struct sockaddr *) &adr_s, &lg)>0){
-        if(request.type == 0){
-            printf("%s\n",request.data);
-        }else{ //Something went wrong
-            printf("Syntax : /create User Password\n");
-            printf("%s\n",request.data);
+        if (request.type == 0) {
+            printf(C_GRN "%s" C_RESET "\n",request.data);
+        } else { // Something went wrong
+            printf(C_RED "Syntax : /create User Password\n");
+            printf("%s" C_RESET "\n",request.data);
         }
     }
 }
